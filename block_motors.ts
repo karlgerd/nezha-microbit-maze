@@ -40,7 +40,7 @@ namespace robotMotors {
      * Konfiguriert den Roboter fuer 4 Antriebsmotoren (Allrad).
      */
     //% group="Konfiguration"
-    //% block="Setze Motorkonfiguration auf 4 Motoren: | vorne links %vl | hinten links %hl | vorne rechts %vr | hinten rechts %hr"
+    //% block="Setze Motorkonfiguration auf 4 Motoren: vorne links %vl hinten links %hl vorne rechts %vr hinten rechts %hr"
     //% vl.defl=robotMotors.MotorPort.M1
     //% hl.defl=robotMotors.MotorPort.M2
     //% vr.defl=robotMotors.MotorPort.M3
@@ -89,13 +89,13 @@ namespace robotMotors {
         let actualRightSpeed = right;
 
         if (isFourWheelDrive) {
-            nezhaInternalMotors.startMotor(motorLeftFront, actualLeftSpeed);
-            nezhaInternalMotors.startMotor(motorLeftRear, actualLeftSpeed);
-            nezhaInternalMotors.startMotor(motorRightFront, actualRightSpeed);
-            nezhaInternalMotors.startMotor(motorRightRear, actualRightSpeed);
+            nezhaInternalMotors.startMotor(<nezhaInternalMotors.MotorPosition>motorLeftFront, actualLeftSpeed);
+            nezhaInternalMotors.startMotor(<nezhaInternalMotors.MotorPosition>motorLeftRear, actualLeftSpeed);
+            nezhaInternalMotors.startMotor(<nezhaInternalMotors.MotorPosition>motorRightFront, actualRightSpeed);
+            nezhaInternalMotors.startMotor(<nezhaInternalMotors.MotorPosition>motorRightRear, actualRightSpeed);
         } else {
-            nezhaInternalMotors.startMotor(motorLeftFront, actualLeftSpeed);
-            nezhaInternalMotors.startMotor(motorRightFront, actualRightSpeed);
+            nezhaInternalMotors.startMotor(<nezhaInternalMotors.MotorPosition>motorLeftFront, actualLeftSpeed);
+            nezhaInternalMotors.startMotor(<nezhaInternalMotors.MotorPosition>motorRightFront, actualRightSpeed);
         }
     }
 

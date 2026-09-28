@@ -9,7 +9,6 @@
     "files": [
         "lib_motors.ts",
         "block_motors.ts",
-        "icon": "icon.png",
         "README.md"
     ],
     "testFiles": [

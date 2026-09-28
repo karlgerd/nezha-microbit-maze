@@ -71,7 +71,20 @@ namespace robotMotors {
     export function drive(power: number): void {
         driveSteer(power, power);
     }
-
+    /**
+     * Faehrt geradeaus fuer eine angegebene Zeit in Millisekunden und stoppt dann.
+     */
+    //% group="Fahren"
+    //% block="fahre mit Leistung %power \\% fuer %ms ms"
+    //% power.min=-100 power.max=100 power.defl=50
+    //% ms.shadow=timePicker ms.defl=1000
+    //% weight=75
+    export function driveForTime(power: number, ms: number): void {
+        drive(power);
+        basic.pause(ms);
+        stop();
+    }
+    
     /**
      * Faehrt eine Kurve mit getrennter Leistungsangabe fuer linke und rechte Seite (-100% bis 100%).
      */
@@ -98,7 +111,22 @@ namespace robotMotors {
             nezhaInternalMotors.startMotor(<nezhaInternalMotors.MotorPosition>motorRightFront, actualRightSpeed);
         }
     }
-
+    /**
+     * Faehrt eine Kurve fuer eine angegebene Zeit in Millisekunden und stoppt dann.
+     */
+    //% group="Fahren"
+    //% block="fahre Kurve mit links %left \\% und rechts %right \\% fuer %ms ms"
+    //% left.min=-100 left.max=100 left.defl=30
+    //% right.min=-100 right.max=100 right.defl=60
+    //% ms.shadow=timePicker ms.defl=1000
+    //% inlineInputMode=inline
+    //% weight=65
+    export function driveSteerForTime(left: number, right: number, ms: number): void {
+        driveSteer(left, right);
+        basic.pause(ms);
+        stop();
+    }
+    
     /**
      * Stoppt sofort alle Motoren des Roboters.
      */

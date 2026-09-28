@@ -2,13 +2,12 @@ namespace nezhaInternalSensors {
 
     let onTiltDownCallback: () => void = null;
     let onTiltUpCallback: () => void = null;
-    let onFlatCallback: () => void = null; // NEU
+    let onFlatCallback: () => void = null;
     
     let isTiltMonitoringRunning = false;
     let tiltDownThresholdMg = -260; 
     let tiltUpThresholdMg = 260;
-    let flatThresholdMg = 90; // NEU: Toleranz für die waagerechte Position
-
+    let flatThresholdMg = 90; //
     function startTiltMonitoring() {
         if (!isTiltMonitoringRunning) {
             isTiltMonitoringRunning = true;
@@ -59,7 +58,7 @@ namespace nezhaInternalSensors {
                         }
                     }
                     
-                    // NEU: Auswertung für "waagerecht" (Rampe verlassen)
+                    // Auswertung für "waagerecht" (Rampe verlassen)
                     if (onFlatCallback) {
                         // Prüft, ob der Wert zwischen -flatThresholdMg und +flatThresholdMg liegt
                         if (Math.abs(y) < flatThresholdMg) {
@@ -95,7 +94,6 @@ namespace nezhaInternalSensors {
         startTiltMonitoring();
     }
 
-    // NEU: Registriert den Callback für die waagerechte Position
     export function onFlat(thresholdMg: number, handler: () => void) {
         flatThresholdMg = thresholdMg;
         onFlatCallback = handler;

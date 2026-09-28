@@ -9,6 +9,7 @@
     "files": [
         "lib_motors.ts",
         "block_motors.ts",
+        "block_sensors.ts",
         "README.md"
     ],
     "testFiles": [

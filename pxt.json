@@ -2,12 +2,14 @@
     "name": "nezha-microbit-maze",
     "version": "0.1.1",
     "description": "MakeCode-Treiberpaket für den micro:bit auf Basis des Nezha-Boards zur Ansteuerung von Elecfreaks-DC-Motoren, Servos und Sensorik (inkl. ToF-Distanzmessung) für Labyrinth-Roboter.",
+    "icon": "icon.png",
     "dependencies": {
         "core": "*"
     },
     "files": [
         "lib_motors.ts",
         "block_motors.ts",
+        "icon": "icon.png",
         "README.md"
     ],
     "testFiles": [

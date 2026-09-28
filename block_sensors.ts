@@ -8,7 +8,7 @@ namespace robotSensors {
      * Löst aus, wenn der Roboter dauerhaft (1s) nach vorne (bergab) kippt.
      * Geht davon aus, dass der USB-Anschluss nach vorne zeigt.
      */
-    //% block="wenn bergab mit (mit mehr als %grad °)"
+    //% block="wenn bergab (mit mehr als %grad °)"
     //% grad.min=5 grad.max=60 grad.defl=15
     //% weight=100
     export function wennKipptUnten(grad: number, handler: () => void): void {

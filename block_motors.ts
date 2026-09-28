@@ -120,7 +120,7 @@ namespace robotMotors {
     //% right.min=-100 right.max=100 right.defl=60
     //% ms.shadow=timePicker ms.defl=1000
     //% inlineInputMode=inline
-    //% weight=65
+    //% weight=60
     export function driveSteerForTime(left: number, right: number, ms: number): void {
         driveSteer(left, right);
         basic.pause(ms);
@@ -132,7 +132,7 @@ namespace robotMotors {
      */
     //% group="Fahren"
     //% block="stoppe alle Motoren"
-    //% weight=60
+    //% weight=50
     export function stop(): void {
         nezhaInternalMotors.stopAllMotors();
     }

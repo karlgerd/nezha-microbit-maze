@@ -1,7 +1,7 @@
 /**
  * Didaktisch reduzierte Motorsteuerung fuer den Roboter (2 oder 4 Motoren).
  */
-//% color="#0D47A1" icon="\uf1b9" block="Motoren" weight=100
+//% color="#007ACC" icon="\uf085" block="Motoren" weight=100
 namespace robotMotors {
 
     // interner Zustand fuer die Motorbelegung
@@ -32,10 +32,10 @@ namespace robotMotors {
      * Konfiguriert den Roboter fuer 4 Antriebsmotoren (Allrad).
      */
     //% group="Konfiguration"
-    //% block="Setze Motorkonfiguration auf 4 Motoren: vorne links %vl hinten links %hl vorne rechts %vr hinten rechts %hr"
+    //% block="Setze Motorkonfiguration auf 4 Motoren: \nvorne links %vl hinten links %hl\nvorne rechts %vr hinten rechts %hr"
     //% vl.defl=nezhaInternalMotors.MotorPosition.M1
-    //% hl.defl=nezhaInternalMotors.MotorPosition.M3
-    //% vr.defl=nezhaInternalMotors.MotorPosition.M2
+    //% hl.defl=nezhaInternalMotors.MotorPosition.M2
+    //% vr.defl=nezhaInternalMotors.MotorPosition.M3
     //% hr.defl=nezhaInternalMotors.MotorPosition.M4
     //% inlineInputMode=external
     //% weight=90

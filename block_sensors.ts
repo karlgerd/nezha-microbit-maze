@@ -11,7 +11,7 @@ namespace robotSensors {
     //% block="wenn bergab (mit mehr als %grad °)"
     //% grad.min=5 grad.max=60 grad.defl=15
     //% weight=100
-    export function wennKipptUnten(grad: number, handler: () => void): void {
+    export function wennBergab(grad: number, handler: () => void): void {
         let thresholdMg = -(Math.sin(grad * Math.PI / 180) * 1024);
         nezhaInternalSensors.onTiltDown(thresholdMg, handler);
     }
@@ -23,7 +23,7 @@ namespace robotSensors {
     //% block="wenn bergauf (mit mehr als %grad °)"
     //% grad.min=5 grad.max=60 grad.defl=15
     //% weight=90
-    export function wennKipptOben(grad: number, handler: () => void): void {
+    export function wennBergauf(grad: number, handler: () => void): void {
         let thresholdMg = (Math.sin(grad * Math.PI / 180) * 1024);
         nezhaInternalSensors.onTiltUp(thresholdMg, handler);
     }

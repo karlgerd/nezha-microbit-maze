@@ -1,6 +1,6 @@
 {
     "name": "nezha-microbit-maze",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "description": "MakeCode-Treiberpaket für den micro:bit auf Basis des Nezha-Boards zur Ansteuerung von Elecfreaks-DC-Motoren, Servos und Sensorik.",
     "icon": "icon.png",
     "dependencies": {
@@ -12,6 +12,8 @@
         "lib_sensors_tilt.ts",
         "lib_sensors_tof.ts",
         "block_sensors.ts",
+        "lib_display_oled.ts",
+        "block_display.ts",
         "README.md"
     ],
     "testFiles": [

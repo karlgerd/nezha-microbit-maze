@@ -142,7 +142,7 @@ namespace robotMotors {
      * Faehrt eine Kurve fuer eine angegebene Zeit in Millisekunden und stoppt dann.
      */
     //% group="Fahren"
-    //% block="fahre Kurve mit mit %left \\% links und %right \\% rechts fuer %ms ms"
+    //% block="fahre Kurve mit %left \\% links und %right \\% rechts fuer %ms ms"
     //% left.min=-100 left.max=100 left.defl=30
     //% right.min=-100 right.max=100 right.defl=60
     //% ms.shadow=timePicker ms.defl=1000

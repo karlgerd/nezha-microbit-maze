@@ -71,6 +71,7 @@ namespace robotMotors {
     export function drive(power: number): void {
         driveSteer(power, power);
     }
+    
     /**
      * Faehrt geradeaus fuer eine angegebene Zeit in Millisekunden und stoppt dann.
      */
@@ -136,6 +137,7 @@ namespace robotMotors {
             nezhaInternalMotors.startMotor(<nezhaInternalMotors.MotorPosition>motorRightFront, actualRightSpeed);
         }
     }
+    
     /**
      * Faehrt eine Kurve fuer eine angegebene Zeit in Millisekunden und stoppt dann.
      */
@@ -182,8 +184,7 @@ namespace robotMotors {
         let targetDegrees = rotations * 360;
         while (Math.abs(nezhaInternalMotors.getRelativeAngle(<nezhaInternalMotors.MotorPosition>refMotor)) < targetDegrees) {
             basic.pause(10);
-        }
-        
+        }        
         stop();
     }
     

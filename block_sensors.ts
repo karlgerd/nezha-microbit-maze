@@ -4,6 +4,31 @@
 //% color="#D40000" icon="\uf1de" block="Sensoren" weight=95
 namespace robotSensors {
 
+
+    /**
+     * Initialisiert den ToF-Sensor an einem bestimmten Pa.Hub-Pin.
+     * Dieser Block muss im "beim Start"-Block ausgeführt werden, bevor Entfernungen gemessen werden können.
+     * @param channel Der Pin am Pa.Hub (0-5), an dem der Sensor angeschlossen ist.
+     */
+    //% block="initialisiere ToF-Sensor an PaHub-Pin %channel"
+    //% channel.min=0 channel.max=5 channel.defl=0
+    //% weight=75
+    export function initialisiereToF(channel: number): void {
+        nezhaInternalSensors.init(channel);
+    }
+    
+     /**
+     * Gibt den gemessenen Abstand des ToF-Sensors in Millimetern (mm) zurück.
+     * @param channel Der Pin am Pa.Hub (0-5), an dem der Sensor angeschlossen ist.
+     */
+    //% block="Abstand in mm von ToF-Sensor an PaHub-Pin %channel"
+    //% channel.min=0 channel.max=5 channel.defl=0
+    //% weight=70
+    export function abstandToF_mm(channel: number): number {
+        return nezhaInternalSensors.readSingle(channel);
+    }
+
+    
     /**
      * Löst aus, wenn der Roboter dauerhaft (1s) nach vorne (bergab) kippt.
      * Geht davon aus, dass der USB-Anschluss nach vorne zeigt.

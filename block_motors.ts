@@ -86,10 +86,35 @@ namespace robotMotors {
     }
     
     /**
+     * Fährt exakt für eine bestimmte Anzahl an Radumdrehungen (mithilfe der Motor-Encoder) und stoppt dann.
+     */
+    //% group="Fahren"
+    //% block="fahre mit Leistung %power \\% für %rotations Umdrehungen"
+    //% power.min=-100 power.max=100 power.defl=50
+    //% rotations.min=0.1 rotations.defl=1
+    //% weight=74
+    export function driveForRotations(power: number, rotations: number): void {
+        if (power === 0 || rotations <= 0) return;
+        
+        // Encoder des vorderen linken Rades als Referenz auf 0 setzen
+        nezhaInternalMotors.resetRelativeAngle(<nezhaInternalMotors.MotorPosition>motorLeftFront);
+        
+        drive(power);
+        
+        // Warten, bis der ausgelesene Winkel die geforderten Umdrehungen (in Grad) erreicht hat
+        let targetDegrees = rotations * 360;
+        while (Math.abs(nezhaInternalMotors.getRelativeAngle(<nezhaInternalMotors.MotorPosition>motorLeftFront)) < targetDegrees) {
+            basic.pause(10);
+        }
+        
+        stop();
+    }
+    
+    /**
      * Faehrt eine Kurve mit getrennter Leistungsangabe fuer linke und rechte Seite (-100% bis 100%).
      */
     //% group="Fahren"
-    //% block="fahre Kurve mit links %left \\% und rechts %right \\%"
+    //% block="fahre Kurve mit mit %left \\% links und %right \\% rechts"
     //% left.min=-100 left.max=100 left.defl=30
     //% right.min=-100 right.max=100 right.defl=60
     //% inlineInputMode=inline
@@ -115,7 +140,7 @@ namespace robotMotors {
      * Faehrt eine Kurve fuer eine angegebene Zeit in Millisekunden und stoppt dann.
      */
     //% group="Fahren"
-    //% block="fahre Kurve mit links %left \\% und rechts %right \\% fuer %ms ms"
+    //% block="fahre Kurve mit mit %left \\% links und %right \\% rechts fuer %ms ms"
     //% left.min=-100 left.max=100 left.defl=30
     //% right.min=-100 right.max=100 right.defl=60
     //% ms.shadow=timePicker ms.defl=1000
@@ -124,6 +149,41 @@ namespace robotMotors {
     export function driveSteerForTime(left: number, right: number, ms: number): void {
         driveSteer(left, right);
         basic.pause(ms);
+        stop();
+    }
+
+    /**
+     * Fährt eine Kurve für eine bestimmte Anzahl an Radumdrehungen.
+     * Gemessen wird an dem Rad, das die längere Strecke (höhere Leistung) zurücklegt.
+     */
+    //% group="Fahren"
+    //% block="fahre Kurve mit %left \\% links und %right \\% rechts für %rotations Umdrehungen"
+    //% left.min=-100 left.max=100 left.defl=30
+    //% right.min=-100 right.max=100 right.defl=60
+    //% rotations.min=0.1 rotations.defl=1
+    //% inlineInputMode=inline
+    //% weight=55
+    export function driveSteerForRotations(left: number, right: number, rotations: number): void {
+        if (left === 0 && right === 0) return;
+        if (rotations <= 0) return;
+        
+        // Den schnelleren Motor (mit der höheren Leistung) als Referenz festlegen
+        let refMotor = motorLeftFront;
+        if (Math.abs(right) > Math.abs(left)) {
+            refMotor = motorRightFront;
+        }
+
+        // Encoder des Referenzmotors zurücksetzen
+        nezhaInternalMotors.resetRelativeAngle(<nezhaInternalMotors.MotorPosition>refMotor);
+        
+        driveSteer(left, right);
+        
+        // Warten, bis der äußere Motor die Ziel-Umdrehungen gefahren ist
+        let targetDegrees = rotations * 360;
+        while (Math.abs(nezhaInternalMotors.getRelativeAngle(<nezhaInternalMotors.MotorPosition>refMotor)) < targetDegrees) {
+            basic.pause(10);
+        }
+        
         stop();
     }
     

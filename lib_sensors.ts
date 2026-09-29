@@ -7,72 +7,49 @@ namespace nezhaInternalSensors {
     let isTiltMonitoringRunning = false;
     let tiltDownThresholdMg = -260; 
     let tiltUpThresholdMg = 260;
-    let flatThresholdMg = 90; //
+    let flatThresholdMg = 200; // Toleranz für die Waagerechte erhöht
+
     function startTiltMonitoring() {
         if (!isTiltMonitoringRunning) {
             isTiltMonitoringRunning = true;
             control.inBackground(function () {
-                let tiltDownStartTime = 0;
-                let tiltUpStartTime = 0;
-                let flatStartTime = 0; // NEU
-                
-                let tiltDownFired = false;
-                let tiltUpFired = false;
-                let flatFired = false; // NEU
+                let currentState = -99;
+                let pendingState = -99;
+                let stateStartTime = 0;
                 
                 while (true) {
                     let y = input.acceleration(Dimension.Y);
                     let currentTime = input.runningTime();
                     
-                    // Auswertung für "nach unten" (bergab)
-                    if (onTiltDownCallback) {
-                        if (y < tiltDownThresholdMg) {
-                            if (tiltDownStartTime === 0) {
-                                tiltDownStartTime = currentTime;
-                            } else if (currentTime - tiltDownStartTime >= 1000) {
-                                if (!tiltDownFired) {
-                                    onTiltDownCallback();
-                                    tiltDownFired = true;
-                                }
-                            }
-                        } else {
-                            tiltDownStartTime = 0;
-                            tiltDownFired = false;
-                        }
+                    let measuredState = pendingState; 
+                    
+                    if (y < tiltDownThresholdMg) {
+                        measuredState = -1;
+                    } else if (y > tiltUpThresholdMg) {
+                        measuredState = 1;
+                    } else if (Math.abs(y) < flatThresholdMg) {
+                        measuredState = 0;
                     }
 
-                    // Auswertung für "nach oben" (bergauf)
-                    if (onTiltUpCallback) {
-                        if (y > tiltUpThresholdMg) {
-                            if (tiltUpStartTime === 0) {
-                                tiltUpStartTime = currentTime;
-                            } else if (currentTime - tiltUpStartTime >= 1000) {
-                                if (!tiltUpFired) {
+                    if (measuredState !== pendingState) {
+                        pendingState = measuredState;
+                        stateStartTime = currentTime;
+                    } else {
+                        // Asymmetrische Auslösezeit: 200 ms für Ebene, 1000 ms für Neigung
+                        let requiredDelay = (pendingState === 0) ? 200 : 1000;
+                        
+                        if (currentTime - stateStartTime >= requiredDelay) {
+                            if (currentState !== pendingState) {
+                                currentState = pendingState;
+                                
+                                if (currentState === -1 && onTiltDownCallback) {
+                                    onTiltDownCallback();
+                                } else if (currentState === 1 && onTiltUpCallback) {
                                     onTiltUpCallback();
-                                    tiltUpFired = true;
-                                }
-                            }
-                        } else {
-                            tiltUpStartTime = 0;
-                            tiltUpFired = false;
-                        }
-                    }
-                    
-                    // Auswertung für "waagerecht" (Rampe verlassen)
-                    if (onFlatCallback) {
-                        // Prüft, ob der Wert zwischen -flatThresholdMg und +flatThresholdMg liegt
-                        if (Math.abs(y) < flatThresholdMg) {
-                            if (flatStartTime === 0) {
-                                flatStartTime = currentTime;
-                            } else if (currentTime - flatStartTime >= 1000) {
-                                if (!flatFired) {
+                                } else if (currentState === 0 && onFlatCallback) {
                                     onFlatCallback();
-                                    flatFired = true;
                                 }
                             }
-                        } else {
-                            flatStartTime = 0;
-                            flatFired = false;
                         }
                     }
                     

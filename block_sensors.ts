@@ -33,7 +33,7 @@ namespace robotSensors {
     //% block="initialisiere RGB-Sensor an PaHub-Pin %channel"
     //% channel.min=0 channel.max=5 channel.defl=1
     //% color="##FFC700"
-    //% weight=65
+    //% weight=30
     export function initialisiereRGB(channel: number): void {
         nezhaInternalSensors.startRgb(channel);
     }
@@ -47,7 +47,7 @@ namespace robotSensors {
     //% block="relativer Farbwert (0-255) %color von RGB-Sensor an PaHub-Pin %channel"
     //% channel.min=0 channel.max=5 channel.defl=1
     //% color="##FFC700"
-    //% weight=60
+    //% weight=20
     export function farbwertRGB(color: RgbColor, channel: number): number {
         if (color === RgbColor.Red) {
             return nezhaInternalSensors.getRed(channel);
@@ -67,7 +67,7 @@ namespace robotSensors {
     //% block="Rohwert %rawChannel von RGB-Sensor an PaHub-Pin %channel"
     //% channel.min=0 channel.max=5 channel.defl=1
     //% color="##FFC700"
-    //% weight=55
+    //% weight=10
     export function rohwertRGB(rawChannel: RgbRawChannel, channel: number): number {
         if (rawChannel === RgbRawChannel.Red) {
             return nezhaInternalSensors.getRedRaw(channel);
@@ -87,19 +87,19 @@ namespace robotSensors {
     //% group="ToF-Abstandssensor"
     //% block="initialisiere ToF-Sensor an PaHub-Pin %channel"
     //% channel.min=0 channel.max=5 channel.defl=0
-    //% weight=75
+    //% weight=50
     export function initialisiereToF(channel: number): void {
         nezhaInternalSensors.init(channel);
     }
     
      /**
-     * Gibt den gemessenen Abstand des ToF-Sensors in Millimetern (mm) zurück.
-     * @param channel Der Pin am Pa.Hub (0-5), an dem der Sensor angeschlossen ist.
-     */
+      * Gibt den gemessenen Abstand des ToF-Sensors in Millimetern (mm) zurück.
+      * @param channel Der Pin am Pa.Hub (0-5), an dem der Sensor angeschlossen ist.
+      */
     //% group="ToF-Abstandssensor"
     //% block="Abstand in mm von ToF-Sensor an PaHub-Pin %channel"
     //% channel.min=0 channel.max=5 channel.defl=0
-    //% weight=70
+    //% weight=40
     export function abstandToF_mm(channel: number): number {
         return nezhaInternalSensors.readSingle(channel);
     }
@@ -113,7 +113,7 @@ namespace robotSensors {
     //% color="#9EB8A0"
     //% block="wenn bergab (mit mehr als %grad °)"
     //% grad.min=5 grad.max=60 grad.defl=15
-    //% weight=100
+    //% weight=80
     export function wennBergab(grad: number, handler: () => void): void {
         let thresholdMg = -(Math.sin(grad * Math.PI / 180) * 1024);
         nezhaInternalSensors.onTiltDown(thresholdMg, handler);
@@ -127,7 +127,7 @@ namespace robotSensors {
     //% color="#9EB8A0"
     //% block="wenn bergauf (mit mehr als %grad °)"
     //% grad.min=5 grad.max=60 grad.defl=15
-    //% weight=90
+    //% weight=70
     export function wennBergauf(grad: number, handler: () => void): void {
         let thresholdMg = (Math.sin(grad * Math.PI / 180) * 1024);
         nezhaInternalSensors.onTiltUp(thresholdMg, handler);
@@ -140,7 +140,7 @@ namespace robotSensors {
     //% group="Neigungssensor"
     //% color="#9EB8A0"
     //% block="wenn Roboter (wieder) waagerecht steht"
-    //% weight=80
+    //% weight=60
     export function wennWaagerecht(handler: () => void): void {
         // Schwellenwert auf 200 mg erhöht (ca. 11,5 Grad Toleranz) für frühes Umschalten
         let thresholdMg = 200; 

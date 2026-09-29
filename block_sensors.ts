@@ -28,10 +28,10 @@ namespace robotSensors {
         nezhaInternalSensors.onTiltUp(thresholdMg, handler);
     }
 
-/**
-     * Löst aus, wenn der Roboter wieder waagerecht steht (Rampe verlassen).
-     * Reagiert sehr schnell (200ms) mit einer Toleranz von unter ca. 11,5 Grad.
-     */
+    /**
+    * Löst aus, wenn der Roboter wieder waagerecht steht (Rampe verlassen).
+    * Reagiert sehr schnell (200ms) mit einer Toleranz von unter ca. 11,5 Grad.
+    */
     //% block="wenn Roboter (wieder) waagerecht steht"
     //% weight=80
     export function wennWaagerecht(handler: () => void): void {

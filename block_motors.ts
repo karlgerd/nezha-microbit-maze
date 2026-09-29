@@ -115,7 +115,7 @@ namespace robotMotors {
      * Faehrt eine Kurve mit getrennter Leistungsangabe fuer linke und rechte Seite (-100% bis 100%).
      */
     //% group="Fahren"
-    //% block="fahre Kurve mit mit %left \\% links und %right \\% rechts"
+    //% block="fahre Kurve mit %left \\% links und %right \\% rechts"
     //% left.min=-100 left.max=100 left.defl=30
     //% right.min=-100 right.max=100 right.defl=60
     //% inlineInputMode=inline

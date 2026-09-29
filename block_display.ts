@@ -3,7 +3,16 @@
  */
 //% color="#00BFFF" icon="\uf26c" block="OLED-Display" weight=85
 namespace oledDisplay {
-
+    
+    // Hilfsfunktion: Füllt den Text mit Leerzeichen auf 25 Zeichen auf
+    function fuelleMitLeerzeichen(text: string): string {
+        let ausgabe = text;
+        while (ausgabe.length < 25) {
+            ausgabe += " ";
+        }
+        return ausgabe;
+    }
+    
     /**
      * Zeigt einen Text auf einer bestimmten Zeile an.
      * @param text Der anzuzeigende Text
@@ -13,7 +22,8 @@ namespace oledDisplay {
     //% line.min=1 line.max=8 line.defl=1
     //% weight=90
     export function zeigeText(text: string, line: number): void {
-        nezhaInternalOLED.show(text, line, nezhaInternalOLED.ShowAlign.Left, nezhaInternalOLED.FontSelection.Normal);
+        let ausgabe = fuelleMitLeerzeichen(text);
+        nezhaInternalOLED.show(ausgabe, line, nezhaInternalOLED.ShowAlign.Left, nezhaInternalOLED.FontSelection.Normal);
     }
 
     /**
@@ -25,7 +35,8 @@ namespace oledDisplay {
     //% line.min=1 line.max=8 line.defl=2
     //% weight=80
     export function zeigeZahl(value: number, line: number): void {
-        nezhaInternalOLED.show(value.toString(), line, nezhaInternalOLED.ShowAlign.Left, nezhaInternalOLED.FontSelection.Normal);
+        let ausgabe = fuelleMitLeerzeichen(value.toString());
+        nezhaInternalOLED.show(ausgabe, line, nezhaInternalOLED.ShowAlign.Left, nezhaInternalOLED.FontSelection.Normal);
     }
 
     /**
@@ -39,7 +50,8 @@ namespace oledDisplay {
     //% line.min=1 line.max=8 line.defl=3
     //% weight=70
     export function zeigeTextUndZahl(text: string, value: number, line: number): void {
-        let ausgabe = text + ": " + value;
+        let textTeil = text + ": " + value;
+        let ausgabe = fuelleMitLeerzeichen(textTeil);
         nezhaInternalOLED.show(ausgabe, line, nezhaInternalOLED.ShowAlign.Left, nezhaInternalOLED.FontSelection.Normal);
     }
 

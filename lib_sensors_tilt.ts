@@ -35,8 +35,13 @@ namespace nezhaInternalSensors {
                         pendingState = measuredState;
                         stateStartTime = currentTime;
                     } else {
-                        // Asymmetrische Auslösezeit: 200 ms für Ebene, 1000 ms für Neigung
-                        let requiredDelay = (pendingState === 0) ? 200 : 1000;
+                        // Standard-Verzögerung für alle Wechsel: 1000 ms
+                        let requiredDelay = 1000;
+                        
+                        // Spezialfall: Von bergauf (1) in die Ebene (0) -> sofort auslösen (0 ms)
+                        if (pendingState === 0 && currentState === 1) {
+                            requiredDelay = 0;
+                        }
                         
                         if (currentTime - stateStartTime >= requiredDelay) {
                             if (currentState !== pendingState) {

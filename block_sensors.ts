@@ -4,7 +4,81 @@
 //% color="#942222" icon="\uf1de" block="Sensoren" weight=95
 namespace robotSensors {
 
+      export enum RgbColor {
+        //% block="Rot"
+        Red,
+        //% block="Grün"
+        Green,
+        //% block="Blau"
+        Blue
+    }
 
+    export enum RgbRawChannel {
+        //% block="Rot"
+        Red,
+        //% block="Grün"
+        Green,
+        //% block="Blau"
+        Blue,
+        //% block="Helligkeit (Clear)"
+        Clear
+    }
+
+    /**
+     * Initialisiert den RGB-Farbsensor an einem bestimmten Pa.Hub-Pin.
+     * Dieser Block muss vor der ersten Messung ausgeführt werden.
+     * @param channel Der Pin am Pa.Hub (0-5), an dem der Sensor angeschlossen ist.
+     */
+    //% group="RGB-Farbsensor"
+    //% block="initialisiere RGB-Sensor an PaHub-Pin %channel"
+    //% channel.min=0 channel.max=5 channel.defl=1
+    //% color="##FFC700"
+    //% weight=65
+    export function initialisiereRGB(channel: number): void {
+        nezhaInternalSensors.startRgb(channel);
+    }
+
+    /**
+     * Gibt den skalierten Farbwert (0-255) des RGB-Sensors in Relation zur Gesamthelligkeit zurück.
+     * @param color Die zu messende Farbe (Rot, Grün oder Blau)
+     * @param channel Der Pin am Pa.Hub (0-5)
+     */
+    //% group="RGB-Farbsensor"
+    //% block="relativer Farbwert (0-255) %color von RGB-Sensor an PaHub-Pin %channel"
+    //% channel.min=0 channel.max=5 channel.defl=1
+    //% color="##FFC700"
+    //% weight=60
+    export function farbwertRGB(color: RgbColor, channel: number): number {
+        if (color === RgbColor.Red) {
+            return nezhaInternalSensors.getRed(channel);
+        } else if (color === RgbColor.Green) {
+            return nezhaInternalSensors.getGreen(channel);
+        } else {
+            return nezhaInternalSensors.getBlue(channel);
+        }
+    }
+
+    /**
+     * Gibt den absoluten Rohwert (16-Bit) des RGB-Sensors zurück.
+     * @param rawChannel Der Messkanal (Rot, Grün, Blau, Helligkeit)
+     * @param channel Der Pin am Pa.Hub (0-5)
+     */
+    //% group="RGB-Farbsensor"
+    //% block="Rohwert %rawChannel von RGB-Sensor an PaHub-Pin %channel"
+    //% channel.min=0 channel.max=5 channel.defl=1
+    //% color="##FFC700"
+    //% weight=55
+    export function rohwertRGB(rawChannel: RgbRawChannel, channel: number): number {
+        if (rawChannel === RgbRawChannel.Red) {
+            return nezhaInternalSensors.getRedRaw(channel);
+        } else if (rawChannel === RgbRawChannel.Green) {
+            return nezhaInternalSensors.getGreenRaw(channel);
+        } else if (rawChannel === RgbRawChannel.Blue) {
+            return nezhaInternalSensors.getBlueRaw(channel);
+        } else {
+            return nezhaInternalSensors.getClearRaw(channel);
+        }
+    }
     /**
      * Initialisiert den ToF-Sensor an einem bestimmten Pa.Hub-Pin.
      * Dieser Block muss im "beim Start"-Block ausgeführt werden, bevor Entfernungen gemessen werden können.

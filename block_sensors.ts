@@ -36,7 +36,7 @@ namespace robotSensors {
      * Geht davon aus, dass der USB-Anschluss nach vorne zeigt.
      */
     //% group="Neigungssensor"
-    //% color="#ADEBB3"
+    //% color="#9EB8A0"
     //% block="wenn bergab (mit mehr als %grad °)"
     //% grad.min=5 grad.max=60 grad.defl=15
     //% weight=100
@@ -50,7 +50,7 @@ namespace robotSensors {
      * Geht davon aus, dass der USB-Anschluss nach vorne zeigt.
      */
     //% group="Neigungssensor"
-    //% color="#ADEBB3"
+    //% color="#9EB8A0"
     //% block="wenn bergauf (mit mehr als %grad °)"
     //% grad.min=5 grad.max=60 grad.defl=15
     //% weight=90
@@ -64,7 +64,7 @@ namespace robotSensors {
     * Reagiert sehr schnell (200ms) mit einer Toleranz von unter ca. 11,5 Grad.
     */
     //% group="Neigungssensor"
-    //% color="#ADEBB3"
+    //% color="#9EB8A0"
     //% block="wenn Roboter (wieder) waagerecht steht"
     //% weight=80
     export function wennWaagerecht(handler: () => void): void {

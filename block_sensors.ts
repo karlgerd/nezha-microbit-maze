@@ -32,7 +32,7 @@ namespace robotSensors {
     //% group="RGB-Farbsensor"
     //% block="initialisiere RGB-Sensor an PaHub-Pin %channel"
     //% channel.min=0 channel.max=5 channel.defl=1
-    //% color="##FFC700"
+    //% color="#FFC700"
     //% weight=30
     export function initialisiereRGB(channel: number): void {
         nezhaInternalSensors.startRgb(channel);
@@ -46,7 +46,7 @@ namespace robotSensors {
     //% group="RGB-Farbsensor"
     //% block="relativer Farbwert (0-255) %color von RGB-Sensor an PaHub-Pin %channel"
     //% channel.min=0 channel.max=5 channel.defl=1
-    //% color="##FFC700"
+    //% color="#FFC700"
     //% weight=20
     export function farbwertRGB(color: RgbColor, channel: number): number {
         if (color === RgbColor.Red) {
@@ -66,7 +66,7 @@ namespace robotSensors {
     //% group="RGB-Farbsensor"
     //% block="Rohwert %rawChannel von RGB-Sensor an PaHub-Pin %channel"
     //% channel.min=0 channel.max=5 channel.defl=1
-    //% color="##FFC700"
+    //% color="#FFC700"
     //% weight=10
     export function rohwertRGB(rawChannel: RgbRawChannel, channel: number): number {
         if (rawChannel === RgbRawChannel.Red) {

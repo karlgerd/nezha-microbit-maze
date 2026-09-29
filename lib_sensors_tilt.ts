@@ -1,8 +1,8 @@
 namespace nezhaInternalSensors {
 
-    let onTiltDownCallback: () => void = null;
-    let onTiltUpCallback: () => void = null;
-    let onFlatCallback: () => void = null;
+    let onTiltDownCallback: () => void;
+    let onTiltUpCallback: () => void;
+    let onFlatCallback: () => void;
     
     let isTiltMonitoringRunning = false;
     let tiltDownThresholdMg = -260; 

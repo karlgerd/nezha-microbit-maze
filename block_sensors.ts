@@ -1,7 +1,7 @@
 /**
  * Sensoren für den Labyrinth-Roboter (Neigung, Farbe, Distanz).
  */
-//% color="#D40000" icon="\uf1de" block="Sensoren" weight=95
+//% color="#942222" icon="\uf1de" block="Sensoren" weight=95
 namespace robotSensors {
 
 
@@ -10,6 +10,7 @@ namespace robotSensors {
      * Dieser Block muss im "beim Start"-Block ausgeführt werden, bevor Entfernungen gemessen werden können.
      * @param channel Der Pin am Pa.Hub (0-5), an dem der Sensor angeschlossen ist.
      */
+    //% group="ToF-Abstandssensor"
     //% block="initialisiere ToF-Sensor an PaHub-Pin %channel"
     //% channel.min=0 channel.max=5 channel.defl=0
     //% weight=75
@@ -21,6 +22,7 @@ namespace robotSensors {
      * Gibt den gemessenen Abstand des ToF-Sensors in Millimetern (mm) zurück.
      * @param channel Der Pin am Pa.Hub (0-5), an dem der Sensor angeschlossen ist.
      */
+    //% group="ToF-Abstandssensor"
     //% block="Abstand in mm von ToF-Sensor an PaHub-Pin %channel"
     //% channel.min=0 channel.max=5 channel.defl=0
     //% weight=70
@@ -33,6 +35,8 @@ namespace robotSensors {
      * Löst aus, wenn der Roboter dauerhaft (1s) nach vorne (bergab) kippt.
      * Geht davon aus, dass der USB-Anschluss nach vorne zeigt.
      */
+    //% group="Neigungssensor"
+    //% color="#ADEBB3"
     //% block="wenn bergab (mit mehr als %grad °)"
     //% grad.min=5 grad.max=60 grad.defl=15
     //% weight=100
@@ -45,6 +49,8 @@ namespace robotSensors {
      * Löst aus, wenn der Roboter dauerhaft (1s) nach hinten (bergauf) kippt.
      * Geht davon aus, dass der USB-Anschluss nach vorne zeigt.
      */
+    //% group="Neigungssensor"
+    //% color="#ADEBB3"
     //% block="wenn bergauf (mit mehr als %grad °)"
     //% grad.min=5 grad.max=60 grad.defl=15
     //% weight=90
@@ -57,6 +63,8 @@ namespace robotSensors {
     * Löst aus, wenn der Roboter wieder waagerecht steht (Rampe verlassen).
     * Reagiert sehr schnell (200ms) mit einer Toleranz von unter ca. 11,5 Grad.
     */
+    //% group="Neigungssensor"
+    //% color="#ADEBB3"
     //% block="wenn Roboter (wieder) waagerecht steht"
     //% weight=80
     export function wennWaagerecht(handler: () => void): void {

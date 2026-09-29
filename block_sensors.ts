@@ -28,15 +28,15 @@ namespace robotSensors {
         nezhaInternalSensors.onTiltUp(thresholdMg, handler);
     }
 
-    /**
-     * Löst aus, wenn der Roboter wieder dauerhaft (1s) waagerecht steht (Rampe verlassen).
-     * Toleranzbereich liegt bei einer Neigung von unter ca. 5 Grad.
+/**
+     * Löst aus, wenn der Roboter wieder waagerecht steht (Rampe verlassen).
+     * Reagiert sehr schnell (200ms) mit einer Toleranz von unter ca. 11,5 Grad.
      */
     //% block="wenn Roboter (wieder) waagerecht steht"
     //% weight=80
     export function wennWaagerecht(handler: () => void): void {
-        // Schwellenwert für ca. 5 Grad Toleranz (sin(5°) * 1024 = ~89 mg)
-        let thresholdMg = 90; 
+        // Schwellenwert auf 200 mg erhöht (ca. 11,5 Grad Toleranz) für frühes Umschalten
+        let thresholdMg = 200; 
         nezhaInternalSensors.onFlat(thresholdMg, handler);
     }
 }

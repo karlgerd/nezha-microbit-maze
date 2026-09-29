@@ -86,6 +86,7 @@ namespace robotSensors {
      */
     //% group="ToF-Abstandssensor"
     //% block="initialisiere ToF-Sensor an PaHub-Pin %channel"
+    //% color="#942222"
     //% channel.min=0 channel.max=5 channel.defl=0
     //% weight=50
     export function initialisiereToF(channel: number): void {
@@ -98,6 +99,7 @@ namespace robotSensors {
       */
     //% group="ToF-Abstandssensor"
     //% block="Abstand in mm von ToF-Sensor an PaHub-Pin %channel"
+    //% color="#942222"
     //% channel.min=0 channel.max=5 channel.defl=0
     //% weight=40
     export function abstandToF_mm(channel: number): number {

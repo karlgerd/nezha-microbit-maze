@@ -66,4 +66,29 @@ namespace nezhaInternalSensors {
     export function getBlue(channel: number): number {
         return getRgbScaled(channel, 0x1A);
     }
+
+    function getRawChannel(channel: number, reg: number): number {
+        if (channel < 0 || channel > 5) return 0;
+        selectChannel(channel);
+        if (!rgbStarted[channel]) {
+            startRgb(channel);
+        }
+        return readRgb16(reg);
+    }
+
+    export function getRedRaw(channel: number): number {
+        return getRawChannel(channel, 0x16);
+    }
+
+    export function getGreenRaw(channel: number): number {
+        return getRawChannel(channel, 0x18);
+    }
+
+    export function getBlueRaw(channel: number): number {
+        return getRawChannel(channel, 0x1A);
+    }
+
+    export function getClearRaw(channel: number): number {
+        return getRawChannel(channel, 0x14);
+    }
 }

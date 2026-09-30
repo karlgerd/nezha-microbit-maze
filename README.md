@@ -18,7 +18,13 @@ Einige Sensoren teilen sich hardwarebedingt dieselbe I2C-Adresse (z. B. ToF-Sens
 2. **OLED-Display:** 
    Das Display nutzt die Adresse `0x3C` (dezimal 60) und kann direkt an einen freien I2C-Anschluss des Nezha-Boards angeschlossen werden.
 
-## Programmierungshinweise
+## Hinweise zum Antrieb und Motoraufbau
+Die Erweiterung ist für Labyrinth-Roboter konzipiert, die über einen 2-Motoren-Antrieb (ein Motor links, ein Motor rechts) oder einen 4-Motoren-Antrieb (jeweils 2 Motoren links und rechts) verfügen.
+
+**Drehrichtung der Motoren:**
+Bauartbedingt sind die Motoren auf der linken und rechten Seite des Fahrgestells spiegelverkehrt montiert. Um eine synchrone Vorwärtsbewegung zu erreichen, wird der linke Motor von der Software intern invertiert ("andersherum") angenommen und angesteuert. Ein positiver Geschwindigkeitswert in den Programmierblöcken führt daher auf beiden Seiten stets zu einer Vorwärtsfahrt, ohne dass die Drehrichtung im Code für eine Seite manuell durch negative Werte korrigiert werden muss.
+
+## Programmierhinweise
 * **Initialisierung:** Die ToF- und RGB-Sensoren am Pa.Hub müssen vor der ersten Messung initialisiert werden. Dafür stehen in der Kategorie "Sensoren" entsprechende Blöcke bereit, die in den `beim Start`-Block eingefügt werden müssen (mit Angabe des jeweiligen Pa.Hub-Kanals).
 * **Displayausgabe:** Die Blöcke zur Text- und Zahlenausgabe nutzen automatisches Padding (Auffüllen mit Leerzeichen auf 25 Zeichen). Dadurch wird ein Flackern des Displays beim Aktualisieren von Sensordaten in Endlosschleifen verhindert. Ein expliziter `lösche Zeile`-Befehl ist vor dem Überschreiben nicht mehr nötig.
 

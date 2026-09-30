@@ -1,6 +1,6 @@
 {
     "name": "nezha-microbit-maze",
-    "version": "0.5.2",
+    "version": "0.6.0",
     "description": "Erweiterung für einen Labyrinth-Roboter mit Nezha, Pa.Hub, Sensoren und OLED.",
     "icon": "icon.png",
     "dependencies": {

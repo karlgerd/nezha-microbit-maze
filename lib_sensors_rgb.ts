@@ -14,20 +14,18 @@ namespace nezhaInternalSensors {
     // Kanalspezifische Statusvariablen für 6 Multiplexer-Kanäle (0-5)
     let rgbStarted: boolean[] = [false, false, false, false, false, false];
 
+    // Cache-Arrays für die Messwerte der 6 Kanäle
+    let cachedC: number[] = [0, 0, 0, 0, 0, 0];
+    let cachedR: number[] = [0, 0, 0, 0, 0, 0];
+    let cachedG: number[] = [0, 0, 0, 0, 0, 0];
+    let cachedB: number[] = [0, 0, 0, 0, 0, 0];
+
     function writeRgbReg(reg: number, val: number): void {
         pins.i2cWriteNumber(TCS34725_I2C_ADDR, (CMD_BIT | reg) << 8 | val, NumberFormat.UInt16BE);
     }
 
-    function readRgb16(reg: number): number {
-        pins.i2cWriteNumber(TCS34725_I2C_ADDR, CMD_BIT | reg, NumberFormat.UInt8BE);
-        return pins.i2cReadNumber(TCS34725_I2C_ADDR, NumberFormat.UInt16LE);
-    }
-
-    // Initialisierung unter Angabe des Pa.Hub-Ports
     export function startRgb(channel: number): void {
         if (channel < 0 || channel > 5) return;
-        
-        // Nutzt die selectChannel-Funktion, die in der ToF-Bibliothek deklariert ist
         selectChannel(channel); 
         
         writeRgbReg(REG_ATIME, 0xEB);
@@ -37,58 +35,63 @@ namespace nezhaInternalSensors {
         rgbStarted[channel] = true;
     }
 
-    // Abfrage der Werte unter Angabe des Pa.Hub-Ports
-    function getRgbScaled(channel: number, colorChannelReg: number): number {
-        if (channel < 0 || channel > 5) return 0;
+    /**
+     * Führt einen I2C-Burst-Read durch und aktualisiert die internen Cache-Variablen.
+     */
+    export function updateRgbValues(channel: number): void {
+        if (channel < 0 || channel > 5) return;
         selectChannel(channel);
-        
-        // Automatische Initialisierung, falls diese vergessen wurde
         if (!rgbStarted[channel]) {
             startRgb(channel);
         }
-        
-        let c = readRgb16(REG_CDATAL);
-        if (c === 0) return 0;
 
-        let val = readRgb16(colorChannelReg);
-        let scaled = Math.round((val / c) * 255);
-        return Math.min(255, Math.max(0, scaled));
+        // Lesezeiger auf erstes Register setzen
+        pins.i2cWriteNumber(TCS34725_I2C_ADDR, CMD_BIT | REG_CDATAL, NumberFormat.UInt8BE);
+        // 8 Bytes am Stück lesen
+        let buf = pins.i2cReadBuffer(TCS34725_I2C_ADDR, 8);
+
+        // Rekonstruktion und Speicherung der 16-Bit Werte im Cache
+        cachedC[channel] = buf[0] | (buf[1] << 8);
+        cachedR[channel] = buf[2] | (buf[3] << 8);
+        cachedG[channel] = buf[4] | (buf[5] << 8);
+        cachedB[channel] = buf[6] | (buf[7] << 8);
     }
 
+    // --- Skalierte Werte aus dem Cache ---
+
     export function getRed(channel: number): number {
-        return getRgbScaled(channel, 0x16);
+        let c = cachedC[channel];
+        if (c === 0) return 0;
+        return Math.min(255, Math.max(0, Math.round((cachedR[channel] / c) * 255)));
     }
 
     export function getGreen(channel: number): number {
-        return getRgbScaled(channel, 0x18);
+        let c = cachedC[channel];
+        if (c === 0) return 0;
+        return Math.min(255, Math.max(0, Math.round((cachedG[channel] / c) * 255)));
     }
 
     export function getBlue(channel: number): number {
-        return getRgbScaled(channel, 0x1A);
+        let c = cachedC[channel];
+        if (c === 0) return 0;
+        return Math.min(255, Math.max(0, Math.round((cachedB[channel] / c) * 255)));
     }
 
-    function getRawChannel(channel: number, reg: number): number {
-        if (channel < 0 || channel > 5) return 0;
-        selectChannel(channel);
-        if (!rgbStarted[channel]) {
-            startRgb(channel);
-        }
-        return readRgb16(reg);
+    // --- Rohwerte aus dem Cache ---
+
+    export function getCachedRedRaw(channel: number): number {
+        return cachedR[channel];
     }
 
-    export function getRedRaw(channel: number): number {
-        return getRawChannel(channel, 0x16);
+    export function getCachedGreenRaw(channel: number): number {
+        return cachedG[channel];
     }
 
-    export function getGreenRaw(channel: number): number {
-        return getRawChannel(channel, 0x18);
+    export function getCachedBlueRaw(channel: number): number {
+        return cachedB[channel];
     }
 
-    export function getBlueRaw(channel: number): number {
-        return getRawChannel(channel, 0x1A);
-    }
-
-    export function getClearRaw(channel: number): number {
-        return getRawChannel(channel, 0x14);
+    export function getCachedClearRaw(channel: number): number {
+        return cachedC[channel];
     }
 }

@@ -4,7 +4,7 @@
 //% color="#942222" icon="\uf1de" block="Sensoren" weight=95
 namespace robotSensors {
 
-      export enum RgbColor {
+export enum RgbColor {
         //% block="Rot"
         Red,
         //% block="Grün"
@@ -39,6 +39,20 @@ namespace robotSensors {
     }
 
     /**
+     * Liest alle Sensorwerte über I2C aus und speichert sie zwischen.
+     * Dieser Block muss vor der Abfrage der Farbwerte aufgerufen werden (z. B. in einer Dauerhaft-Schleife).
+     * @param channel Der Pin am Pa.Hub (0-5)
+     */
+    //% group="RGB-Farbsensor"
+    //% block="aktualisiere RGB-Sensorwerte an PaHub-Pin %channel"
+    //% channel.min=0 channel.max=5 channel.defl=1
+    //% color="#FFC700"
+    //% weight=25
+    export function aktualisiereRGB(channel: number): void {
+        nezhaInternalSensors.updateRgbValues(channel);
+    }
+
+    /**
      * Gibt den skalierten Farbwert (0-255) des RGB-Sensors in Relation zur Gesamthelligkeit zurück.
      * @param color Die zu messende Farbe (Rot, Grün oder Blau)
      * @param channel Der Pin am Pa.Hub (0-5)
@@ -59,7 +73,22 @@ namespace robotSensors {
     }
 
     /**
-     * Gibt den absoluten Rohwert (16-Bit) des RGB-Sensors zurück.
+     * Gibt eine Liste (Array) mit allen vier Rohwerten des RGB-Sensors zurück.
+     * Format der Liste: [Rot, Grün, Blau, Helligkeit]
+     * @param channel Der Pin am Pa.Hub (0-5)
+     */
+    //% group="RGB-Farbsensor"
+    //% block="alle Rohwerte als Liste von RGB-Sensor an PaHub-Pin %channel"
+    //% channel.min=0 channel.max=5 channel.defl=1
+    //% color="#FFC700"
+    //% weight=15
+    export function alleRohwerteRGB(channel: number): number[] {
+        return nezhaInternalSensors.getAllRawValues(channel);
+    }
+
+    /**
+     * Gibt den absoluten Rohwert (16-Bit) aus dem Zwischenspeicher zurück.
+     * Benötigt vorherigen Aufruf von 'aktualisiere RGB-Sensorwerte'.
      * @param rawChannel Der Messkanal (Rot, Grün, Blau, Helligkeit)
      * @param channel Der Pin am Pa.Hub (0-5)
      */
@@ -70,15 +99,16 @@ namespace robotSensors {
     //% weight=10
     export function rohwertRGB(rawChannel: RgbRawChannel, channel: number): number {
         if (rawChannel === RgbRawChannel.Red) {
-            return nezhaInternalSensors.getRedRaw(channel);
+            return nezhaInternalSensors.getCachedRedRaw(channel);
         } else if (rawChannel === RgbRawChannel.Green) {
-            return nezhaInternalSensors.getGreenRaw(channel);
+            return nezhaInternalSensors.getCachedGreenRaw(channel);
         } else if (rawChannel === RgbRawChannel.Blue) {
-            return nezhaInternalSensors.getBlueRaw(channel);
+            return nezhaInternalSensors.getCachedBlueRaw(channel);
         } else {
-            return nezhaInternalSensors.getClearRaw(channel);
+            return nezhaInternalSensors.getCachedClearRaw(channel);
         }
     }
+      
     /**
      * Initialisiert den ToF-Sensor an einem bestimmten Pa.Hub-Pin.
      * Dieser Block muss im "beim Start"-Block ausgeführt werden, bevor Entfernungen gemessen werden können.

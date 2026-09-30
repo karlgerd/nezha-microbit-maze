@@ -94,4 +94,18 @@ namespace nezhaInternalSensors {
     export function getCachedClearRaw(channel: number): number {
         return cachedC[channel];
     }
+
+    /**
+     * Gibt alle vier Rohwerte (Rot, Grün, Blau, Clear) aus dem Zwischenspeicher als Liste zurück.
+     * @param channel Der Pin am Pa.Hub (0-5)
+     */
+    export function getAllRawValues(channel: number): number[] {
+        if (channel < 0 || channel > 5) return [0, 0, 0, 0];
+        return [
+            cachedR[channel], 
+            cachedG[channel], 
+            cachedB[channel], 
+            cachedC[channel]
+        ];
+    }
 }

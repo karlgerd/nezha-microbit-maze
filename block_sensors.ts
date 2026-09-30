@@ -40,7 +40,7 @@ export enum RgbColor {
 
     /**
      * Liest alle Sensorwerte über I2C aus und speichert sie zwischen.
-     * Dieser Block muss vor der Abfrage der Farbwerte aufgerufen werden (z. B. in einer Dauerhaft-Schleife).
+     * Dieser Block muss vor der Abfrage der Farbwerte aufgerufen werden, um aktuelle Werte zu erhalten.
      * @param channel Der Pin am Pa.Hub (0-5)
      */
     //% group="RGB-Farbsensor"
@@ -52,8 +52,9 @@ export enum RgbColor {
         nezhaInternalSensors.updateRgbValues(channel);
     }
 
-    /**
-     * Gibt den skalierten Farbwert (0-255) des RGB-Sensors in Relation zur Gesamthelligkeit zurück.
+     /**
+     * Gibt den skalierten Farbwert (0-255) aus dem Zwischenspeicher zurück.
+     * Benötigt vorherigen Aufruf von 'aktualisiere RGB-Sensorwerte'.
      * @param color Die zu messende Farbe (Rot, Grün oder Blau)
      * @param channel Der Pin am Pa.Hub (0-5)
      */

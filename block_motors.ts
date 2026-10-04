@@ -76,10 +76,10 @@ namespace robotMotors {
      */
     //% group="Fahren"
     //% block="fahre %ms ms mit %power \\% Leistung"
-    //% ms.defl = 500
+    //% ms.defl=500
     //% power.min=-100 power.max=100 power.defl=50
     //% weight=75
-    export function driveForTime(power: number, ms: number): void {
+    export function driveForTime(ms: number, power: number): void {
         drive(power);
         basic.pause(ms);
         stop();
@@ -93,7 +93,7 @@ namespace robotMotors {
     //% rotations.min=0.1 rotations.defl=1.0
     //% power.min=-100 power.max=100 power.defl=50
     //% weight=74
-    export function driveForRotations(power: number, rotations: number): void {
+    export function driveForRotations(rotations: number, power: number): void {
         if (power === 0 || rotations <= 0) return;
         
         // Encoder des vorderen linken Rades als Referenz auf 0 setzen
@@ -120,8 +120,8 @@ namespace robotMotors {
     //% inlineInputMode=inline
     //% weight=70
     export function driveSteer(left: number, right: number): void {
-        left = Math.clamp(-100, 100, left);
-        right = Math.clamp(-100, 100, right);
+        left = Math.max(-100, Math.min(100, left));
+        right = Math.max(-100, Math.min(100, right));
 
         let actualLeftSpeed = -left;
         let actualRightSpeed = right;
@@ -142,12 +142,12 @@ namespace robotMotors {
      */
     //% group="Fahren"
     //% block="fahre fuer %ms ms Kurve mit %left \\% links und %right \\% rechts"
-    //% ms.defl = 500
+    //% ms.defl=500
     //% left.min=-100 left.max=100 left.defl=10
     //% right.min=-100 right.max=100 right.defl=40
     //% inlineInputMode=inline
     //% weight=60
-    export function driveSteerForTime(left: number, right: number, ms: number): void {
+    export function driveSteerForTime(ms: number, left: number, right: number): void {
         driveSteer(left, right);
         basic.pause(ms);
         stop();
@@ -164,7 +164,7 @@ namespace robotMotors {
     //% right.min=-100 right.max=100 right.defl=40
     //% inlineInputMode=inline
     //% weight=55
-    export function driveSteerForRotations(left: number, right: number, rotations: number): void {
+    export function driveSteerForRotations(rotations: number, left: number, right: number): void {
         if (left === 0 && right === 0) return;
         if (rotations <= 0) return;
         
@@ -223,9 +223,8 @@ namespace robotMotors {
     //% angle.min=0 angle.max=180 angle.defl=90
     //% weight=40
     export function setServoAngle(port: ServoPort, angle: number): void {
-        angle = Math.clamp(0, 180, angle);
-        pins.servoWritePin(port, angle);
+        angle = Math.max(0, Math.min(180, angle));
+        pins.servoWritePin(<number>port, angle);
         basic.pause(800);
     }
 }
-

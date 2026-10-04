@@ -1,7 +1,7 @@
 /**
  * Didaktisch reduzierte Motorsteuerung fuer den Roboter (2 oder 4 Motoren).
  */
-//% color="#007ACC" icon="\uf085" block="Motoren" weight=100
+//% color="#0A7ACC" icon="\uf085" block="Motoren" weight=100
 namespace robotMotors {
 
     export enum MotorPort {

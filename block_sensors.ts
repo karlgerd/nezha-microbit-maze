@@ -25,12 +25,12 @@ export enum RgbColor {
     }
 
     /**
-     * Initialisiert den RGB-Farbsensor an einem bestimmten Pa.Hub-Pin.
+     * Initialisiert den RGB-Farbsensor an einem bestimmten Pa.Hub-Port.
      * Dieser Block muss vor der ersten Messung ausgeführt werden.
      * @param channel Der Pin am Pa.Hub (0-5), an dem der Sensor angeschlossen ist.
      */
     //% group="RGB-Farbsensor"
-    //% block="initialisiere RGB-Sensor an PaHub-Pin %channel"
+    //% block="initialisiere RGB-Sensor an PaHub-Port %channel"
     //% channel.min=0 channel.max=5 channel.defl=1
     //% color="#FFC700"
     //% weight=30
@@ -44,7 +44,7 @@ export enum RgbColor {
      * @param channel Der Pin am Pa.Hub (0-5)
      */
     //% group="RGB-Farbsensor"
-    //% block="aktualisiere RGB-Sensorwerte an PaHub-Pin %channel"
+    //% block="aktualisiere RGB-Werte an Port %channel"
     //% channel.min=0 channel.max=5 channel.defl=1
     //% color="#FFC700"
     //% weight=25
@@ -59,7 +59,7 @@ export enum RgbColor {
      * @param channel Der Pin am Pa.Hub (0-5)
      */
     //% group="RGB-Farbsensor"
-    //% block="relativer Farbwert (0-255) %color von RGB-Sensor an PaHub-Pin %channel"
+    //% block="relativer Farbwert (0-255) %color an Port %channel"
     //% channel.min=0 channel.max=5 channel.defl=1
     //% color="#FFC700"
     //% weight=20
@@ -79,7 +79,7 @@ export enum RgbColor {
      * @param channel Der Pin am Pa.Hub (0-5)
      */
     //% group="RGB-Farbsensor"
-    //% block="alle Rohwerte als Liste von RGB-Sensor an PaHub-Pin %channel"
+    //% block="Rohwerte als Liste von RGB-Sensor an Port %channel"
     //% channel.min=0 channel.max=5 channel.defl=1
     //% color="#FFC700"
     //% weight=15
@@ -94,7 +94,7 @@ export enum RgbColor {
      * @param channel Der Pin am Pa.Hub (0-5)
      */
     //% group="RGB-Farbsensor"
-    //% block="Rohwert %rawChannel von RGB-Sensor an PaHub-Pin %channel"
+    //% block="Farb-Rohwert %rawChannel an Port %channel"
     //% channel.min=0 channel.max=5 channel.defl=1
     //% color="#FFC700"
     //% weight=10
@@ -111,12 +111,12 @@ export enum RgbColor {
     }
       
     /**
-     * Initialisiert den ToF-Sensor an einem bestimmten Pa.Hub-Pin.
+     * Initialisiert den ToF-Sensor an einem bestimmten Pa.Hub-Port.
      * Dieser Block muss im "beim Start"-Block ausgeführt werden, bevor Entfernungen gemessen werden können.
      * @param channel Der Pin am Pa.Hub (0-5), an dem der Sensor angeschlossen ist.
      */
     //% group="ToF-Abstandssensor"
-    //% block="initialisiere ToF-Sensor an PaHub-Pin %channel"
+    //% block="initialisiere ToF-Sensor an PaHub-Port %channel"
     //% color="#942222"
     //% channel.min=0 channel.max=5 channel.defl=0
     //% weight=50
@@ -129,7 +129,7 @@ export enum RgbColor {
       * @param channel Der Pin am Pa.Hub (0-5), an dem der Sensor angeschlossen ist.
       */
     //% group="ToF-Abstandssensor"
-    //% block="Abstand in mm von ToF-Sensor an PaHub-Pin %channel"
+    //% block="Abstand in mm an Port %channel"
     //% color="#942222"
     //% channel.min=0 channel.max=5 channel.defl=0
     //% weight=40
@@ -175,7 +175,7 @@ export enum RgbColor {
     //% block="wenn Roboter (wieder) waagerecht steht"
     //% weight=60
     export function wennWaagerecht(handler: () => void): void {
-        // Schwellenwert auf 200 mg erhöht (ca. 11,5 Grad Toleranz) für frühes Umschalten
+        // Schwellenwert ist 200 mg (ca. 11,5 Grad Toleranz) für frühes Umschalten
         let thresholdMg = 200; 
         nezhaInternalSensors.onFlat(thresholdMg, handler);
     }

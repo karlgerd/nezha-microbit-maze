@@ -37,7 +37,7 @@ namespace robotMotors {
     }
 
     /**
-     * Konfiguriert den Roboter fuer 4 Antriebsmotoren (Allrad).
+     * Konfiguriert den Roboter fuer 4 Antriebsmotoren (Allrad). (Standard: M1 und M2 links, M3 und M4 rechts).
      */
     //% group="Konfiguration"
     //% block="Setze Motorkonfiguration auf 4 Motoren: vorne links %vl hinten links %hl vorne rechts %vr hinten rechts %hr"
@@ -96,18 +96,15 @@ namespace robotMotors {
     export function driveForRotations(rotations: number, power: number): void {
         if (power === 0 || rotations <= 0) return;
         
-        // Encoder des vorderen linken Rades als Referenz auf 0 setzen
-        nezhaInternalMotors.resetRelativeAngle(<nezhaInternalMotors.MotorPosition>motorLeftFront);
+        nezhaInternalMotors.setupDriveMotors(
+            <nezhaInternalMotors.MotorPosition>motorLeftFront,
+            <nezhaInternalMotors.MotorPosition>motorRightFront
+        );
         
-        drive(power);
+        let dir = power >= 0 ? nezhaInternalMotors.DriveDirection.Forward : nezhaInternalMotors.DriveDirection.Backward;
+        let speed = Math.abs(power);
         
-        // Warten, bis der ausgelesene Winkel die geforderten Umdrehungen (in Grad) erreicht hat
-        let targetDegrees = rotations * 360;
-        while (Math.abs(nezhaInternalMotors.getRelativeAngle(<nezhaInternalMotors.MotorPosition>motorLeftFront)) < targetDegrees) {
-            basic.pause(10);
-        }
-        
-        stop();
+        nezhaInternalMotors.driveDistance(dir, speed, rotations, nezhaInternalMotors.RunUnit.Turns);
     }
     
     /**
@@ -176,6 +173,7 @@ namespace robotMotors {
 
         // Encoder des Referenzmotors zurücksetzen
         nezhaInternalMotors.resetRelativeAngle(<nezhaInternalMotors.MotorPosition>refMotor);
+        basic.pause(30); // I2C-Race-Condition beheben
         
         driveSteer(left, right);
         
@@ -221,7 +219,7 @@ namespace robotMotors {
     //% color="#00008B"
     //% block="setze Servo an Port %port auf %angle Grad"
     //% angle.min=0 angle.max=180 angle.defl=90
-    //% weight=40    
+    //% weight=40
     export function setServoAngle(port: ServoPort, angle: number): void {
         angle = Math.max(0, Math.min(180, angle));
         pins.servoWritePin(<number>port, angle);

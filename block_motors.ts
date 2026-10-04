@@ -197,4 +197,36 @@ namespace robotMotors {
     export function stop(): void {
         nezhaInternalMotors.stopAllMotors();
     }
+
+    // --- Erweiterung für Micro-Servo an J1-J4 ---
+
+    /**
+     * Zuordnung der Ports J1 bis J4 auf die jeweiligen Signal-Pins (Pin 3).
+     */
+    export enum ServoPort {
+        //% block="J1"
+        J1 = AnalogPin.P8,
+        //% block="J2"
+        J2 = AnalogPin.P12,
+        //% block="J3"
+        J3 = AnalogPin.P14,
+        //% block="J4"
+        J4 = AnalogPin.P16
+    }
+
+    /**
+     * Setzt den Micro-Servo auf einen bestimmten Winkel zwischen 0 und 180 Grad.
+     * Pausiert das Programm anschließend für 800ms.
+     */
+    //% group="Micro-Servo"
+    //% color="#00008B"
+    //% block="setze Servo an Port %port auf %angle Grad"
+    //% angle.min=0 angle.max=180 angle.defl=90
+    //% weight=40
+    export function setServoAngle(port: ServoPort, angle: number): void {
+        angle = Math.clamp(0, 180, angle);
+        pins.servoWritePin(port, angle);
+        basic.pause(800);
+    }
 }
+

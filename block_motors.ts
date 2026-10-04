@@ -76,7 +76,7 @@ namespace robotMotors {
      * Faehrt geradeaus fuer eine angegebene Zeit in Millisekunden und stoppt dann.
      */
     //% group="Fahren"
-    //% block="fahre mit Leistung %power \\% fuer %ms ms"
+    //% block="fahre %ms ms mit %power \\% Leistung"
     //% power.min=-100 power.max=100 power.defl=50
     //% ms.shadow=timePicker ms.defl=1000
     //% weight=75
@@ -90,7 +90,7 @@ namespace robotMotors {
      * Fährt exakt für eine bestimmte Anzahl an Radumdrehungen (mithilfe der Motor-Encoder) und stoppt dann.
      */
     //% group="Fahren"
-    //% block="fahre mit Leistung %power \\% für %rotations Umdrehungen"
+    //% block="fahre %rotations Umdrehungen mit %power \\% Leistung"
     //% power.min=-100 power.max=100 power.defl=50
     //% rotations.min=0.1 rotations.defl=1
     //% weight=74
@@ -116,8 +116,8 @@ namespace robotMotors {
      */
     //% group="Fahren"
     //% block="fahre Kurve mit %left \\% links und %right \\% rechts"
-    //% left.min=-100 left.max=100 left.defl=30
-    //% right.min=-100 right.max=100 right.defl=60
+    //% left.min=-100 left.max=100 left.defl=-20
+    //% right.min=-100 right.max=100 right.defl=40
     //% inlineInputMode=inline
     //% weight=70
     export function driveSteer(left: number, right: number): void {
@@ -142,9 +142,9 @@ namespace robotMotors {
      * Faehrt eine Kurve fuer eine angegebene Zeit in Millisekunden und stoppt dann.
      */
     //% group="Fahren"
-    //% block="fahre Kurve mit %left \\% links und %right \\% rechts fuer %ms ms"
-    //% left.min=-100 left.max=100 left.defl=30
-    //% right.min=-100 right.max=100 right.defl=60
+    //% block="fahre fuer %ms ms Kurve mit %left \\% links und %right \\% rechts"
+    //% left.min=-100 left.max=100 left.defl=-20
+    //% right.min=-100 right.max=100 right.defl=40
     //% ms.shadow=timePicker ms.defl=1000
     //% inlineInputMode=inline
     //% weight=60
@@ -159,9 +159,9 @@ namespace robotMotors {
      * Gemessen wird an dem Rad, das die längere Strecke (höhere Leistung) zurücklegt.
      */
     //% group="Fahren"
-    //% block="fahre Kurve mit %left \\% links und %right \\% rechts für %rotations Umdrehungen"
-    //% left.min=-100 left.max=100 left.defl=30
-    //% right.min=-100 right.max=100 right.defl=60
+    //% block="fahre für %rotations Umdrehungen Kurve mit %left \\% links und %right \\% rechts"
+    //% left.min=-100 left.max=100 left.defl=-20
+    //% right.min=-100 right.max=100 right.defl=40
     //% rotations.min=0.1 rotations.defl=1
     //% inlineInputMode=inline
     //% weight=55

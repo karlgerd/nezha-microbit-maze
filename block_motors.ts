@@ -18,17 +18,17 @@ namespace robotMotors {
     // Interner Zustand fuer die Motorbelegung
     let isFourWheelDrive: boolean = false;
     let motorLeftFront: number = MotorPort.M1;
-    let motorLeftRear: number = MotorPort.M3;
-    let motorRightFront: number = MotorPort.M2;
+    let motorLeftRear: number = MotorPort.M2;
+    let motorRightFront: number = MotorPort.M3;
     let motorRightRear: number = MotorPort.M4;
 
     /**
-     * Konfiguriert den Roboter fuer 2 Antriebsmotoren (Standard: M1 links, M2 rechts).
+     * Konfiguriert den Roboter fuer 2 Antriebsmotoren (Standard: M1 links, M4 rechts).
      */
     //% group="Konfiguration"
     //% block="Setze Motorkonfiguration auf 2 Motoren: links %left rechts %right"
     //% left.defl=robotMotors.MotorPort.M1
-    //% right.defl=robotMotors.MotorPort.M2
+    //% right.defl=robotMotors.MotorPort.M4
     //% weight=100
     export function setTwoMotors(left: MotorPort, right: MotorPort): void {
         isFourWheelDrive = false;
@@ -221,10 +221,10 @@ namespace robotMotors {
     //% color="#00008B"
     //% block="setze Servo an Port %port auf %angle Grad"
     //% angle.min=0 angle.max=180 angle.defl=90
-    //% weight=40
+    //% weight=40    
     export function setServoAngle(port: ServoPort, angle: number): void {
         angle = Math.max(0, Math.min(180, angle));
-        pins.servoWritePin(<number>port, angle);
+        pins.servoWritePin(<AnalogPin>port, angle);
         basic.pause(800);
     }
 }

@@ -224,7 +224,7 @@ namespace robotMotors {
     //% weight=40    
     export function setServoAngle(port: ServoPort, angle: number): void {
         angle = Math.max(0, Math.min(180, angle));
-        pins.servoWritePin(port as unknown as AnalogPin, angle);
+        pins.servoWritePin(<number>port, angle);
         basic.pause(800);
     }
 }

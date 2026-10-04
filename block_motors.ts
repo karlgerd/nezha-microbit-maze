@@ -78,7 +78,6 @@ namespace robotMotors {
     //% group="Fahren"
     //% block="fahre %ms ms mit %power \\% Leistung"
     //% power.min=-100 power.max=100 power.defl=50
-    //% ms.shadow=timePicker ms.defl=1000
     //% weight=75
     export function driveForTime(power: number, ms: number): void {
         drive(power);
@@ -143,9 +142,8 @@ namespace robotMotors {
      */
     //% group="Fahren"
     //% block="fahre fuer %ms ms Kurve mit %left \\% links und %right \\% rechts"
-    //% left.min=-100 left.max=100 left.defl=-20
+    //% left.min=-100 left.max=100 left.defl=10
     //% right.min=-100 right.max=100 right.defl=40
-    //% ms.shadow=timePicker ms.defl=1000
     //% inlineInputMode=inline
     //% weight=60
     export function driveSteerForTime(left: number, right: number, ms: number): void {
@@ -160,7 +158,7 @@ namespace robotMotors {
      */
     //% group="Fahren"
     //% block="fahre für %rotations Umdrehungen Kurve mit %left \\% links und %right \\% rechts"
-    //% left.min=-100 left.max=100 left.defl=-20
+    //% left.min=-100 left.max=100 left.defl=10
     //% right.min=-100 right.max=100 right.defl=40
     //% rotations.min=0.1 rotations.defl=1
     //% inlineInputMode=inline

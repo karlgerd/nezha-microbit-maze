@@ -64,7 +64,7 @@ namespace robotMotors {
      * Faehrt geradeaus vorwaerts (positive Leistung) oder rueckwaerts (negative Leistung).
      */
     //% group="Fahren"
-    //% block="fahre mit Leistung %power \\%"
+    //% block="fahre mit %power \\% Leistung"
     //% power.min=-100 power.max=100
     //% power.defl=50
     //% weight=80

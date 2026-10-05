@@ -1,6 +1,6 @@
 {
     "name": "nezha-microbit-maze",
-    "version": "0.8.1",
+    "version": "0.9.0",
     "description": "Erweiterung für den Dammer Rescue-Maze-Roboter mit Nezha-Board und micro:bit",
     "dependencies": {
         "core": "*"

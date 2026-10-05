@@ -35,17 +35,19 @@ namespace Motoren {
     export function setzeAntriebAuf2Motoren(links: NezhaMotors.Motor, rechts: NezhaMotors.Motor): void {
         NezhaMotors.setzeAntriebAuf2Motoren(links, rechts);
     }
-
+    
     /**
      * Legt die mechanischen Abmessungen des Roboters für präzise Drehungen fest.
+     * Berechnet automatisch die Diagonale für die 4WD-Panzerlenkung.
      */
-    //% block="Setze Fahrzeuggeometrie: Radumfang $radumfangCm cm | Radabstand $radabstandCm cm"
+    //% block="Setze Fahrzeuggeometrie: Radumfang $radumfangCm cm | Radabstand (L/R) $abstandLinksRechtsCm cm | Radabstand (V/H) $abstandVorneHintenCm cm"
     //% group="Konfiguration"
     //% radumfangCm.defl=17.59
-    //% radabstandCm.defl=14.5
+    //% abstandLinksRechtsCm.defl=14.5
+    //% abstandVorneHintenCm.defl=9.3
     //% weight=80
-    export function setzeFahrzeugGeometrie(radumfangCm: number, radabstandCm: number): void {
-        NezhaMotors.setzeFahrzeugGeometrie(radumfangCm, radabstandCm);
+    export function setzeFahrzeugGeometrie(radumfangCm: number, abstandLinksRechtsCm: number, abstandVorneHintenCm: number): void {
+        NezhaMotors.setzeFahrzeugGeometrie(radumfangCm, abstandLinksRechtsCm, abstandVorneHintenCm);
     }
 
     // ==========================================

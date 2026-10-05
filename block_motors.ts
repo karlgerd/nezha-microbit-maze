@@ -94,6 +94,18 @@ namespace Motoren {
     }
     
     /**
+     * Fährt für eine vorgegebene Zeit mit gegebener Leistung geradeaus.
+     */
+     //% block="fahre für $ms ms mit $leistung % Leistung"
+    //% group="Bewegung (Präzise/Blockierend)"
+    //% ms.defl=500
+    //% leistung.min=-100 leistung.max=100 leistung.defl=50
+    //% weight=95
+    export function fahreZeit(ms: number, leistung: number): void {
+        NezhaMotors.fahreKurveZeit(leistung, leistung, ms);
+    }
+    
+    /**
      * Fährt für eine vorgegebene Zeit mit angegebener Leistung.
      */
     //% block="fahre für $ms ms mit $leistungLinks % links und $leistungRechts % rechts"

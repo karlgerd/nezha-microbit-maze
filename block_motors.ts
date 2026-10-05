@@ -3,7 +3,7 @@
  * Diese Datei definiert ausschließlich die grafische Repräsentation in MakeCode 
  * und leitet die Befehle an die interne Motor-Bibliothek weiter.
  */
-color="#0A7ACC" icon="\uf085" block="Motoren" weight=100
+//% color="#0A7ACC" icon="\uf085" block="Motoren" weight=100
 namespace Motoren {
 
     // ==========================================
@@ -16,10 +16,10 @@ namespace Motoren {
     //% block="Setze Motorkonfiguration auf 4 Motoren: vorne links $vl hinten links $hl vorne rechts $vr hinten rechts $hr"
     //% group="Konfiguration"
     //% weight=100
-    //% vl.defl=robotMotors.MotorPort.M1
-    //% hl.defl=robotMotors.MotorPort.M2
-    //% vr.defl=robotMotors.MotorPort.M3
-    //% hr.defl=robotMotors.MotorPort.M4
+    //% vl.defl=NezhaMotors.Motor.M1
+    //% hl.defl=NezhaMotors.Motor.M2
+    //% vr.defl=NezhaMotors.Motor.M3
+    //% hr.defl=NezhaMotors.Motor.M4
     export function setzeAntriebAuf4Motoren(vl: NezhaMotors.Motor, hl: NezhaMotors.Motor, vr: NezhaMotors.Motor, hr: NezhaMotors.Motor): void {
         NezhaMotors.setzeAntriebAuf4Motoren(vl, hl, vr, hr);
     }
@@ -30,8 +30,8 @@ namespace Motoren {
     //% block="Setze Motorkonfiguration auf 2 Motoren: links $links rechts $rechts"
     //% group="Konfiguration"
     //% weight=90
-    //% links.defl=robotMotors.MotorPort.M1
-    //% rechts.defl=robotMotors.MotorPort.M2
+    //% links.defl=NezhaMotors.Motor.M1
+    //% rechts.defl=NezhaMotors.Motor.M2
     export function setzeAntriebAuf2Motoren(links: NezhaMotors.Motor, rechts: NezhaMotors.Motor): void {
         NezhaMotors.setzeAntriebAuf2Motoren(links, rechts);
     }
@@ -41,7 +41,7 @@ namespace Motoren {
      */
     //% block="Setze Fahrzeuggeometrie: Radumfang $radumfangCm cm | Radabstand $radabstandCm cm"
     //% group="Konfiguration"
-    //% radumfangCm.defl=175.9
+    //% radumfangCm.defl=17.59
     //% radabstandCm.defl=14.5
     //% weight=80
     export function setzeFahrzeugGeometrie(radumfangCm: number, radabstandCm: number): void {
@@ -86,7 +86,7 @@ namespace Motoren {
     //% group="Bewegung (Präzise/Blockierend)"
     //% umdrehungen.defl=1
     //% leistung.min=-100 leistung.max=100 leistung.defl=50
-    //% weight=70
+    //% weight=100
     export function fahreUmdrehungen(umdrehungen: number, leistung: number): void {
         NezhaMotors.fahreUmdrehungen(leistung, umdrehungen);
     }
@@ -99,7 +99,7 @@ namespace Motoren {
     //% ms.defl=500
     //% leistungLinks.min=-100 leistungLinks.max=100 leistungLinks.defl=50
     //% leistungRechts.min=-100 leistungRechts.max=100 leistungRechts.defl=50
-    //% weight=80
+    //% weight=90
     export function fahreKurveZeit(ms: number, leistungLinks: number, leistungRechts: number): void {
         NezhaMotors.fahreKurveZeit(leistungLinks, leistungRechts, ms);
     }
@@ -111,7 +111,7 @@ namespace Motoren {
     //% group="Bewegung (Präzise/Blockierend)"
     //% grad.defl=90
     //% leistung.min=1 leistung.max=100 leistung.defl=50
-    //% weight=90
+    //% weight=80
     export function dreheRoboterAufDerStelle(grad: number, richtung: NezhaMotors.TurnDirection, leistung: number): void {
         NezhaMotors.dreheRoboterAufDerStelle(grad, richtung, leistung);
     }
@@ -121,8 +121,9 @@ namespace Motoren {
      */
     //% block="drehe auf der Stelle für $ms ms nach $richtung mit $leistung % Leistung"
     //% group="Bewegung (Präzise/Blockierend)"
+    //% ms.defl=500
     //% leistung.min=1 leistung.max=100 leistung.defl=30
-    //% weight=100
+    //% weight=70
     export function dreheAufDerStelleZeit(ms: number, richtung: NezhaMotors.TurnDirection, leistung: number): void {
         let lLinks = richtung === NezhaMotors.TurnDirection.Left ? -leistung : leistung;
         let lRechts = richtung === NezhaMotors.TurnDirection.Left ? leistung : -leistung;
@@ -152,10 +153,13 @@ namespace Motoren {
     export function setzeEncoderAufNull(motor: NezhaMotors.Motor): void {
         NezhaMotors.setzeEncoderAufNull(motor);
     }
-        // --- Erweiterung für Micro-Servo an J1-J4 ---
+    
+    // ==========================================
+    // Gruppe: Micro-Servo (Rescue Kit)
+    // ==========================================
 
     /**
-     * Zuordnung der Ports J1 bis J4 auf die jeweiligen Signal-Pins (Pin 3).
+     * Zuordnung der Ports J1 bis J4 auf Pin 3 (Signal) des Nezha-Boards.
      */
     export enum ServoPort {
         //% block="J1"
@@ -174,9 +178,9 @@ namespace Motoren {
      */
     //% group="Micro-Servo"
     //% color="#00008B"
-    //% block="setze Servo an Port %port auf %angle Grad"
+    //% block="setze Servo an Port $port auf $angle Grad"
     //% angle.min=0 angle.max=180 angle.defl=90
-    //% weight=40
+    //% weight=50
     export function setServoAngle(port: ServoPort, angle: number): void {
         angle = Math.max(0, Math.min(180, angle));
         pins.servoWritePin(<number>port, angle);

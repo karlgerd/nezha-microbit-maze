@@ -50,6 +50,17 @@ namespace Motoren {
         NezhaMotors.setzeFahrzeugGeometrie(radumfangCm, abstandLinksRechtsCm, abstandVorneHintenCm);
     }
 
+    /**
+     * Legt einen Korrekturfaktor für den Radschlupf bei Drehungen fest.
+     */
+    //% block="Setze Rotations-Slipfaktor $faktor"
+    //% group="Konfiguration"
+    //% faktor.defl=1.28
+    //% weight=75
+    export function setzeSlipFaktor(faktor: number): void {
+        NezhaMotors.setzeSlipFaktor(faktor);
+    }
+
     // ==========================================
     // Gruppe: Bewegung (Dauerhaft)
     // ==========================================

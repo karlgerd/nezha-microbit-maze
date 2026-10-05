@@ -180,6 +180,12 @@ namespace NezhaMotors {
         _radabstandCm = Math.sqrt((lr * lr) + (vh * vh));
     }
 
+    let _slipFaktor: number = 1.0;
+
+    export function setzeSlipFaktor(faktor: number): void {
+        _slipFaktor = Math.max(0.1, faktor);
+    }
+
     // --- Dauerhaftes Fahren ---
     export function fahreDauerhaft(leistungLinks: number, leistungRechts: number): void {
         leistungLinks = Math.clamp(-100, 100, leistungLinks);
@@ -208,8 +214,7 @@ namespace NezhaMotors {
     export function dreheRoboterAufDerStelle(grad: number, richtung: TurnDirection, leistung: number): void {
         if (grad <= 0) return;
         leistung = Math.clamp(1, 100, Math.abs(leistung));
-
-        let bogenlaenge = (grad / 360.0) * (Math.PI * _radabstandCm);
+        let bogenlaenge = (grad / 360.0) * (Math.PI * _radabstandCm) * _slipFaktor;
         let motorGrad = (bogenlaenge / _radumfangCm) * 360.0;
 
         nezhaInternalMotors.setInternalSpeed(leistung);

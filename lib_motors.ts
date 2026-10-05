@@ -148,12 +148,12 @@ namespace NezhaMotors {
     // --- Zustandsvariablen ---
     let _ist4WD: boolean = false;
     let _motorVL: Motor = Motor.M1;
-    let _motorHL: Motor = Motor.M4;
-    let _motorVR: Motor = Motor.M2;
-    let _motorHR: Motor = Motor.M3;
+    let _motorHL: Motor = Motor.M2;
+    let _motorVR: Motor = Motor.M3;
+    let _motorHR: Motor = Motor.M4;
     
-    let _radumfangCm: number = 14.13;
-    let _radabstandCm: number = 12.0;
+    let _radumfangCm: number = 17.59; // Standardwerte, falls keine eigenen konfiguriert wurden
+    let _radabstandCm: number = 14.5;
 
     // --- Konfiguration & Geometrie ---
     export function setzeAntriebAuf4Motoren(vl: Motor, hl: Motor, vr: Motor, hr: Motor): void {
@@ -170,9 +170,14 @@ namespace NezhaMotors {
         _motorVR = rechts;
     }
 
-    export function setzeFahrzeugGeometrie(radumfangCm: number, radabstandCm: number): void {
+
+    export function setzeFahrzeugGeometrie(radumfangCm: number, abstandLinksRechtsCm: number, abstandVorneHintenCm: number): void {
         _radumfangCm = Math.max(0.1, radumfangCm);
-        _radabstandCm = Math.max(0.1, radabstandCm);
+        let lr = Math.max(0.1, abstandLinksRechtsCm);
+        let vh = Math.max(0.1, abstandVorneHintenCm);
+        
+        // Berechnung des effektiven Rotationsdurchmessers (Diagonale) über Pythagoras
+        _radabstandCm = Math.sqrt((lr * lr) + (vh * vh));
     }
 
     // --- Dauerhaftes Fahren ---
@@ -220,6 +225,7 @@ namespace NezhaMotors {
         }
 
         nezhaInternalMotors.waitForMotion(motorGrad, nezhaInternalMotors.MotionTargetMode.Degrees);
+        stoppeAlleMotoren();
     }
 
     // --- Zeitbasierte Fahrbefehle ---
@@ -241,64 +247,23 @@ namespace NezhaMotors {
         let absLeistung = Math.abs(leistung);
         if (absLeistung === 0) return;
 
+        // Umrechnung in Grad, um den Float-Verlust bei der I2C-Übertragung zu umgehen
+        let motorGrad = umdrehungen * 360.0;
+
         nezhaInternalMotors.setInternalSpeed(absLeistung);
         
         let dirL = leistung >= 0 ? nezhaInternalMotors.TurnDirection.CCW : nezhaInternalMotors.TurnDirection.CW;
         let dirR = leistung >= 0 ? nezhaInternalMotors.TurnDirection.CW : nezhaInternalMotors.TurnDirection.CCW;
 
-        nezhaInternalMotors.rawMove(_motorVL as number, dirL, umdrehungen, nezhaInternalMotors.MotionTargetMode.Turns);
-        nezhaInternalMotors.rawMove(_motorVR as number, dirR, umdrehungen, nezhaInternalMotors.MotionTargetMode.Turns);
+        // Nutzung des Modus Degrees anstelle von Turns
+        nezhaInternalMotors.rawMove(_motorVL as number, dirL, motorGrad, nezhaInternalMotors.MotionTargetMode.Degrees);
+        nezhaInternalMotors.rawMove(_motorVR as number, dirR, motorGrad, nezhaInternalMotors.MotionTargetMode.Degrees);
         if (_ist4WD) {
-            nezhaInternalMotors.rawMove(_motorHL as number, dirL, umdrehungen, nezhaInternalMotors.MotionTargetMode.Turns);
-            nezhaInternalMotors.rawMove(_motorHR as number, dirR, umdrehungen, nezhaInternalMotors.MotionTargetMode.Turns);
+            nezhaInternalMotors.rawMove(_motorHL as number, dirL, motorGrad, nezhaInternalMotors.MotionTargetMode.Degrees);
+            nezhaInternalMotors.rawMove(_motorHR as number, dirR, motorGrad, nezhaInternalMotors.MotionTargetMode.Degrees);
         }
         
-        nezhaInternalMotors.waitForMotion(umdrehungen, nezhaInternalMotors.MotionTargetMode.Turns);
-    }
-
-    export function fahreKurveUmdrehungen(leistungLinks: number, leistungRechts: number, umdrehungen: number): void {
-        if (umdrehungen <= 0) return;
-        leistungLinks = Math.clamp(-100, 100, leistungLinks);
-        leistungRechts = Math.clamp(-100, 100, leistungRechts);
-        
-        let absLinks = Math.abs(leistungLinks);
-        let absRechts = Math.abs(leistungRechts);
-        if (absLinks === 0 && absRechts === 0) return;
-
-        // Finde das kurveninnere Rad (Rad mit geringerer Leistung, aber ungleich 0 falls möglich)
-        let refMotor = (absLinks <= absRechts && absLinks > 0) ? _motorVL : _motorVR;
-        if (absLinks === 0) refMotor = _motorVR; // Drehungen über stillstehendes Rad abstützen
-        if (absRechts === 0) refMotor = _motorVL;
-        
-        let startWinkel = leseAbsolutenWinkel(refMotor);
-        let zielWinkelDifferenz = umdrehungen * 360.0;
-        
-        fahreDauerhaft(leistungLinks, leistungRechts);
-        
-        let letzterWinkel = startWinkel;
-        let zeitLetzteAenderung = input.runningTime();
-        
-        while (true) {
-            let aktuellerWinkel = leseAbsolutenWinkel(refMotor);
-            let gefahren = Math.abs(aktuellerWinkel - startWinkel);
-            
-            if (gefahren >= zielWinkelDifferenz) {
-                break;
-            }
-            
-            // Timeout-Schutz bei mechanischer Blockade
-            if (Math.abs(aktuellerWinkel - letzterWinkel) > 0.5) {
-                letzterWinkel = aktuellerWinkel;
-                zeitLetzteAenderung = input.runningTime();
-            } else {
-                if (input.runningTime() - zeitLetzteAenderung > 1000) { 
-                    break;
-                }
-            }
-            
-            basic.pause(10);
-        }
-        
+        nezhaInternalMotors.waitForMotion(motorGrad, nezhaInternalMotors.MotionTargetMode.Degrees);
         stoppeAlleMotoren();
     }
 

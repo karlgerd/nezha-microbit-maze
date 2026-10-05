@@ -1,228 +1,174 @@
 /**
- * Didaktisch reduzierte Motorsteuerung fuer den Roboter (2 oder 4 Motoren).
+ * UI-Blöcke für die Motorsteuerung.
+ * Diese Datei definiert ausschließlich die grafische Repräsentation in MakeCode 
+ * und leitet die Befehle an die interne Motor-Bibliothek weiter.
  */
-//% color="#0A7ACC" icon="\uf085" block="Motoren" weight=100
-namespace robotMotors {
+//% color=#d50000 icon="\uf2db" block="Motoren"
+namespace Motoren {
 
-    export enum MotorPort {
-        //% block="M1"
-        M1 = 1,
-        //% block="M2"
-        M2 = 2,
-        //% block="M3"
-        M3 = 3,
-        //% block="M4"
-        M4 = 4
-    }
-
-    // Interner Zustand fuer die Motorbelegung
-    let isFourWheelDrive: boolean = false;
-    let motorLeftFront: number = MotorPort.M1;
-    let motorLeftRear: number = MotorPort.M2;
-    let motorRightFront: number = MotorPort.M3;
-    let motorRightRear: number = MotorPort.M4;
+    // ==========================================
+    // Gruppe: Konfiguration
+    // ==========================================
 
     /**
-     * Konfiguriert den Roboter fuer 2 Antriebsmotoren (Standard: M1 links, M4 rechts).
+     * Konfiguriert den Roboter für einen 4-Rad-Antrieb (4WD).
      */
+    //% block="Setze Motorkonfiguration auf 4 Motoren: vorne links $vl hinten links $hl vorne rechts $vr hinten rechts $hr"
     //% group="Konfiguration"
-    //% block="Setze Motorkonfiguration auf 2 Motoren: links %left rechts %right"
-    //% left.defl=robotMotors.MotorPort.M1
-    //% right.defl=robotMotors.MotorPort.M4
     //% weight=100
-    export function setTwoMotors(left: MotorPort, right: MotorPort): void {
-        isFourWheelDrive = false;
-        motorLeftFront = left;
-        motorRightFront = right;
+    export function setzeAntriebAuf4Motoren(vl: NezhaMotors.Motor, hl: NezhaMotors.Motor, vr: NezhaMotors.Motor, hr: NezhaMotors.Motor): void {
+        NezhaMotors.setzeAntriebAuf4Motoren(vl, hl, vr, hr);
     }
 
     /**
-     * Konfiguriert den Roboter fuer 4 Antriebsmotoren (Allrad). (Standard: M1 und M2 links, M3 und M4 rechts).
+     * Konfiguriert den Roboter für einen 2-Rad-Antrieb (2WD).
      */
+    //% block="Setze Motorkonfiguration auf 2 Motoren: links $links rechts $rechts"
     //% group="Konfiguration"
-    //% block="Setze Motorkonfiguration auf 4 Motoren: vorne links %vl hinten links %hl vorne rechts %vr hinten rechts %hr"
-    //% vl.defl=robotMotors.MotorPort.M1
-    //% hl.defl=robotMotors.MotorPort.M2
-    //% vr.defl=robotMotors.MotorPort.M3
-    //% hr.defl=robotMotors.MotorPort.M4
-    //% inlineInputMode=external
     //% weight=90
-    export function setFourMotors(
-        vl: MotorPort,
-        hl: MotorPort,
-        vr: MotorPort,
-        hr: MotorPort
-    ): void {
-        isFourWheelDrive = true;
-        motorLeftFront = vl;
-        motorLeftRear = hl;
-        motorRightFront = vr;
-        motorRightRear = hr;
+    export function setzeAntriebAuf2Motoren(links: NezhaMotors.Motor, rechts: NezhaMotors.Motor): void {
+        NezhaMotors.setzeAntriebAuf2Motoren(links, rechts);
     }
 
     /**
-     * Faehrt geradeaus vorwaerts (positive Leistung) oder rueckwaerts (negative Leistung).
+     * Legt die mechanischen Abmessungen des Roboters für präzise Drehungen fest.
      */
-    //% group="Fahren"
-    //% block="fahre mit %power \\% Leistung"
-    //% power.min=-100 power.max=100 power.defl=50
+    //% block="Setze Fahrzeuggeometrie: Radumfang $radumfangCm cm | Radabstand $radabstandCm cm"
+    //% group="Konfiguration"
+    //% radumfangCm.defl=14.13
+    //% radabstandCm.defl=12.0
     //% weight=80
-    export function drive(power: number): void {
-        driveSteer(power, power);
+    export function setzeFahrzeugGeometrie(radumfangCm: number, radabstandCm: number): void {
+        NezhaMotors.setzeFahrzeugGeometrie(radumfangCm, radabstandCm);
     }
-    
-    /**
-     * Faehrt geradeaus fuer eine angegebene Zeit in Millisekunden und stoppt dann.
-     */
-    //% group="Fahren"
-    //% block="fahre %ms ms mit %power \\% Leistung"
-    //% ms.defl=500
-    //% power.min=-100 power.max=100 power.defl=50
-    //% weight=75
-    export function driveForTime(ms: number, power: number): void {
-        drive(power);
-        basic.pause(ms);
-        stop();
-    }
-    
-    /**
-     * Fährt exakt für eine bestimmte Anzahl an Radumdrehungen (mithilfe der Motor-Encoder) und stoppt dann.
-     */
-    //% group="Fahren"
-    //% block="fahre %rotations Umdrehungen mit %power \\% Leistung"
-    //% rotations.min=0.1 rotations.defl=1.0
-    //% power.min=-100 power.max=100 power.defl=50
-    //% weight=74
-    export function driveForRotations(rotations: number, power: number): void {
-        if (power === 0 || rotations <= 0) return;
-        
-        nezhaInternalMotors.setupDriveMotors(
-            <nezhaInternalMotors.MotorPosition>motorLeftFront,
-            <nezhaInternalMotors.MotorPosition>motorRightFront
-        );
-        
-        let dir = power >= 0 ? nezhaInternalMotors.DriveDirection.Forward : nezhaInternalMotors.DriveDirection.Backward;
-        let speed = Math.abs(power);
-        
-        nezhaInternalMotors.driveDistance(dir, speed, rotations, nezhaInternalMotors.RunUnit.Turns);
-    }
-    
-    /**
-     * Faehrt eine Kurve mit getrennter Leistungsangabe fuer linke und rechte Seite (-100% bis 100%).
-     */
-    //% group="Fahren"
-    //% block="fahre Kurve mit %left \\% links und %right \\% rechts"
-    //% left.min=-100 left.max=100 left.defl=-20
-    //% right.min=-100 right.max=100 right.defl=40
-    //% inlineInputMode=inline
-    //% weight=70
-    export function driveSteer(left: number, right: number): void {
-        left = Math.max(-100, Math.min(100, left));
-        right = Math.max(-100, Math.min(100, right));
 
-        let actualLeftSpeed = -left;
-        let actualRightSpeed = right;
 
-        if (isFourWheelDrive) {
-            nezhaInternalMotors.startMotor(<nezhaInternalMotors.MotorPosition>motorLeftFront, actualLeftSpeed);
-            nezhaInternalMotors.startMotor(<nezhaInternalMotors.MotorPosition>motorLeftRear, actualLeftSpeed);
-            nezhaInternalMotors.startMotor(<nezhaInternalMotors.MotorPosition>motorRightFront, actualRightSpeed);
-            nezhaInternalMotors.startMotor(<nezhaInternalMotors.MotorPosition>motorRightRear, actualRightSpeed);
-        } else {
-            nezhaInternalMotors.startMotor(<nezhaInternalMotors.MotorPosition>motorLeftFront, actualLeftSpeed);
-            nezhaInternalMotors.startMotor(<nezhaInternalMotors.MotorPosition>motorRightFront, actualRightSpeed);
-        }
-    }
-    
+    // ==========================================
+    // Gruppe: Bewegung (Dauerhaft)
+    // ==========================================
+
     /**
-     * Faehrt eine Kurve fuer eine angegebene Zeit in Millisekunden und stoppt dann.
+     * Fährt dauerhaft geradeaus mit der gleichen Leistung auf beiden Seiten.
      */
-    //% group="Fahren"
-    //% block="fahre fuer %ms ms Kurve mit %left \\% links und %right \\% rechts"
-    //% ms.defl=500
-    //% left.min=-100 left.max=100 left.defl=10
-    //% right.min=-100 right.max=100 right.defl=40
-    //% inlineInputMode=inline
-    //% weight=60
-    export function driveSteerForTime(ms: number, left: number, right: number): void {
-        driveSteer(left, right);
-        basic.pause(ms);
-        stop();
+    //% block="fahre mit $leistung % Leistung"
+    //% group="Bewegung (Dauerhaft)"
+    //% leistung.min=-100 leistung.max=100 leistung.defl=50
+    //% weight=100
+    export function fahre(leistung: number): void {
+        NezhaMotors.fahreDauerhaft(leistung, leistung);
     }
 
     /**
-     * Fährt eine Kurve für eine bestimmte Anzahl an Radumdrehungen.
-     * Gemessen wird an dem Rad, das die längere Strecke (höhere Leistung) zurücklegt.
+     * Fährt dauerhaft eine Kurve mit asymmetrischer Leistung.
      */
-    //% group="Fahren"
-    //% block="fahre für %rotations Umdrehungen Kurve mit %left \\% links und %right \\% rechts"
-    //% rotations.min=0.1 rotations.defl=1.0
-    //% left.min=-100 left.max=100 left.defl=10
-    //% right.min=-100 right.max=100 right.defl=40
-    //% inlineInputMode=inline
-    //% weight=55
-    export function driveSteerForRotations(rotations: number, left: number, right: number): void {
-        if (left === 0 && right === 0) return;
-        if (rotations <= 0) return;
-        
-        // Den schnelleren Motor (mit der höheren Leistung) als Referenz festlegen
-        let refMotor = motorLeftFront;
-        if (Math.abs(right) > Math.abs(left)) {
-            refMotor = motorRightFront;
-        }
-
-        // Encoder des Referenzmotors zurücksetzen
-        nezhaInternalMotors.resetRelativeAngle(<nezhaInternalMotors.MotorPosition>refMotor);
-        basic.pause(30); // I2C-Race-Condition beheben
-        
-        driveSteer(left, right);
-        
-        // Warten, bis der äußere Motor die Ziel-Umdrehungen gefahren ist
-        let targetDegrees = rotations * 360;
-        while (Math.abs(nezhaInternalMotors.getRelativeAngle(<nezhaInternalMotors.MotorPosition>refMotor)) < targetDegrees) {
-            basic.pause(10);
-        }        
-        stop();
+    //% block="fahre Kurve mit $leistungLinks % links und $leistungRechts % rechts"
+    //% group="Bewegung (Dauerhaft)"
+    //% leistungLinks.min=-100 leistungLinks.max=100 leistungLinks.defl=-20
+    //% leistungRechts.min=-100 leistungRechts.max=100 leistungRechts.defl=40
+    //% weight=90
+    export function fahreDauerhaft(leistungLinks: number, leistungRechts: number): void {
+        NezhaMotors.fahreDauerhaft(leistungLinks, leistungRechts);
     }
-    
+
     /**
-     * Stoppt sofort alle Motoren des Roboters.
+     * Stoppt sofort alle konfigurierten Motoren.
      */
-    //% group="Fahren"
     //% block="stoppe alle Motoren"
-    //% weight=50
-    export function stop(): void {
-        nezhaInternalMotors.stopAllMotors();
+    //% group="Bewegung (Dauerhaft)"
+    //% weight=80
+    export function stoppeAlleMotoren(): void {
+        NezhaMotors.stoppeAlleMotoren();
     }
 
-    // --- Erweiterung für Micro-Servo an J1-J4 ---
+
+    // ==========================================
+    // Gruppe: Bewegung (Präzise/Blockierend)
+    // ==========================================
 
     /**
-     * Zuordnung der Ports J1 bis J4 auf die jeweiligen Signal-Pins (Pin 3).
+     * Dreht den Roboter präzise auf der Stelle um eine bestimmte Gradzahl.
      */
-    export enum ServoPort {
-        //% block="J1"
-        J1 = AnalogPin.P8,
-        //% block="J2"
-        J2 = AnalogPin.P12,
-        //% block="J3"
-        J3 = AnalogPin.P14,
-        //% block="J4"
-        J4 = AnalogPin.P16
+    //% block="drehe auf der Stelle um $grad ° nach $richtung mit $leistung % Leistung"
+    //% group="Bewegung (Präzise/Blockierend)"
+    //% grad.defl=90
+    //% leistung.min=1 leistung.max=100 leistung.defl=50
+    //% weight=100
+    export function dreheRoboterAufDerStelle(grad: number, richtung: NezhaMotors.TurnDirection, leistung: number): void {
+        NezhaMotors.dreheRoboterAufDerStelle(grad, richtung, leistung);
     }
 
     /**
-     * Setzt den Micro-Servo auf einen bestimmten Winkel zwischen 0 und 180 Grad.
-     * Pausiert das Programm anschließend für 800ms.
+     * Fährt für eine vorgegebene Zeit (in Millisekunden) geradeaus.
      */
-    //% group="Micro-Servo"
-    //% color="#00008B"
-    //% block="setze Servo an Port %port auf %angle Grad"
-    //% angle.min=0 angle.max=180 angle.defl=90
-    //% weight=40
-    export function setServoAngle(port: ServoPort, angle: number): void {
-        angle = Math.max(0, Math.min(180, angle));
-        pins.servoWritePin(<number>port, angle);
-        basic.pause(800);
+    //% block="fahre $ms ms mit $leistung % Leistung"
+    //% group="Bewegung (Präzise/Blockierend)"
+    //% ms.shadow=timePicker ms.defl=500
+    //% leistung.min=-100 leistung.max=100 leistung.defl=50
+    //% weight=90
+    export function fahreZeit(ms: number, leistung: number): void {
+        NezhaMotors.fahreZeit(leistung, ms);
+    }
+
+    /**
+     * Fährt für eine vorgegebene Zeit eine Kurve.
+     */
+    //% block="fahre fuer $ms ms Kurve mit $leistungLinks % links und $leistungRechts % rechts"
+    //% group="Bewegung (Präzise/Blockierend)"
+    //% ms.shadow=timePicker ms.defl=500
+    //% leistungLinks.min=-100 leistungLinks.max=100 leistungLinks.defl=10
+    //% leistungRechts.min=-100 leistungRechts.max=100 leistungRechts.defl=40
+    //% weight=80
+    export function fahreKurveZeit(ms: number, leistungLinks: number, leistungRechts: number): void {
+        NezhaMotors.fahreKurveZeit(leistungLinks, leistungRechts, ms);
+    }
+
+    /**
+     * Fährt geradeaus, basierend auf der Anzahl der Radumdrehungen.
+     */
+    //% block="fahre $umdrehungen Umdrehungen mit $leistung % Leistung"
+    //% group="Bewegung (Präzise/Blockierend)"
+    //% umdrehungen.defl=1
+    //% leistung.min=-100 leistung.max=100 leistung.defl=50
+    //% weight=70
+    export function fahreUmdrehungen(umdrehungen: number, leistung: number): void {
+        NezhaMotors.fahreUmdrehungen(leistung, umdrehungen);
+    }
+
+    /**
+     * Fährt eine Kurve, basierend auf der Anzahl der Radumdrehungen des inneren Rades.
+     */
+    //% block="fahre für $umdrehungen Umdrehungen Kurve mit $leistungLinks % links und $leistungRechts % rechts"
+    //% group="Bewegung (Präzise/Blockierend)"
+    //% umdrehungen.defl=1
+    //% leistungLinks.min=-100 leistungLinks.max=100 leistungLinks.defl=10
+    //% leistungRechts.min=-100 leistungRechts.max=100 leistungRechts.defl=40
+    //% weight=60
+    export function fahreKurveUmdrehungen(umdrehungen: number, leistungLinks: number, leistungRechts: number): void {
+        NezhaMotors.fahreKurveUmdrehungen(leistungLinks, leistungRechts, umdrehungen);
+    }
+
+
+    // ==========================================
+    // Gruppe: Encoder
+    // ==========================================
+
+    /**
+     * Liest den aktuellen absoluten Winkel des Encoders für den gewählten Motor aus.
+     */
+    //% block="lese absoluten Winkel von Motor $motor"
+    //% group="Encoder"
+    //% weight=100
+    export function leseAbsolutenWinkel(motor: NezhaMotors.Motor): number {
+        return NezhaMotors.leseAbsolutenWinkel(motor);
+    }
+
+    /**
+     * Setzt den internen Zähler (Encoder) des gewählten Motors auf Null zurück.
+     */
+    //% block="setze Encoder von Motor $motor auf Null"
+    //% group="Encoder"
+    //% weight=90
+    export function setzeEncoderAufNull(motor: NezhaMotors.Motor): void {
+        NezhaMotors.setzeEncoderAufNull(motor);
     }
 }

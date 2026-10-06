@@ -5,6 +5,19 @@
  */
 //% color="#0A7ACC" icon="\uf085" block="Motoren" weight=100
 namespace Motoren {
+    export enum Motor {
+        M1 = 1,
+        M2 = 2,
+        M3 = 3,
+        M4 = 4
+    }
+
+    export enum TurnDirection {
+        //% block="links"
+        Left = 1,
+        //% block="rechts"
+        Right = 2
+    }
 
     // ==========================================
     // Gruppe: Konfiguration

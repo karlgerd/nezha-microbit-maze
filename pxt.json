@@ -1,20 +1,23 @@
 {
     "name": "nezha-microbit-maze",
-    "version": "0.9.3",
-    "description": "Erweiterung für den Dammer Rescue-Maze-Roboter mit Nezha-Board und micro:bit",
+    "version": "1.0.0",
+    "description": "Didaktisch reduzierte Blöcke für Rescue-Maze-Roboter mit micro:bit und Elecfreaks Nezha-Board: Motoren, ToF-, Farb- und Neigungssensor, OLED-Anzeige",
+    "license": "MIT",
     "dependencies": {
         "core": "*"
     },
     "files": [
+        "README.md",
+        "LICENSE",
+        "lib_pahub.ts",
         "lib_motors.ts",
-        "block_motors.ts",
-        "lib_sensors_tilt.ts",
         "lib_sensors_tof.ts",
         "lib_sensors_rgb.ts",
-        "block_sensors.ts",
+        "lib_sensors_tilt.ts",
         "lib_display_oled.ts",
-        "block_display.ts",
-        "README.md"
+        "block_motors.ts",
+        "block_sensors.ts",
+        "block_display.ts"
     ],
     "testFiles": [
         "test.ts"
@@ -26,5 +29,5 @@
     "supportedTargets": [
         "microbit"
     ],
-    "preferredEditor": "tsprj"
+    "preferredEditor": "blocksprj"
 }

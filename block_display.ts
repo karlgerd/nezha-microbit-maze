@@ -1,77 +1,70 @@
 /**
- * Blöcke für die Anzeige auf dem OLED-Display.
+ * Textausgabe auf dem Grove OLED-Display (8 Zeilen à 25 Zeichen).
  */
-//% color="#00BFFF" icon="\uf26c" block="OLED-Display" weight=85
-namespace oledDisplay {
-    
-    // Hilfsfunktion: Füllt den Text mit Leerzeichen auf 25 Zeichen auf
-    function fuelleMitLeerzeichen(text: string): string {
-        let ausgabe = text;
-        while (ausgabe.length < 25) {
-            ausgabe += " ";
-        }
-        return ausgabe;
-    }
-    
+//% color="#00BFFF" icon="\uf26c" block="Anzeige" weight=85
+namespace anzeige {
+
     /**
-     * Zeigt einen Text auf einer bestimmten Zeile an.
-     * @param text Der anzuzeigende Text
-     * @param line Die Zeilennummer (1-8)
+     * Zeigt einen Text in einer Zeile an. Der alte Inhalt der Zeile wird überschrieben,
+     * Texte über 25 Zeichen werden abgeschnitten.
+     * @param text der anzuzeigende Text
+     * @param zeile Zeilennummer (1-8)
      */
-    //% block="zeige Text %text in Zeile %line"
-    //% line.min=1 line.max=8 line.defl=1
+    //% blockId=nezhamaze_oled_text
+    //% block="zeige Text $text in Zeile $zeile"
+    //% zeile.min=1 zeile.max=8 zeile.defl=1
     //% weight=90
-    export function zeigeText(text: string, line: number): void {
-        let ausgabe = fuelleMitLeerzeichen(text);
-        nezhaInternalOLED.show(ausgabe, line, nezhaInternalOLED.ShowAlign.Left, nezhaInternalOLED.FontSelection.Normal);
+    export function zeigeText(text: string, zeile: number): void {
+        nezhaOled.writeLine(text, zeile);
     }
 
     /**
-     * Zeigt eine Zahl auf einer bestimmten Zeile an.
-     * @param value Die anzuzeigende Zahl
-     * @param line Die Zeilennummer (1-8)
+     * Zeigt eine Zahl in einer Zeile an. Der alte Inhalt der Zeile wird überschrieben.
+     * @param zahl die anzuzeigende Zahl
+     * @param zeile Zeilennummer (1-8)
      */
-    //% block="zeige Zahl %value in Zeile %line"
-    //% line.min=1 line.max=8 line.defl=2
+    //% blockId=nezhamaze_oled_number
+    //% block="zeige Zahl $zahl in Zeile $zeile"
+    //% zeile.min=1 zeile.max=8 zeile.defl=2
     //% weight=80
-    export function zeigeZahl(value: number, line: number): void {
-        let ausgabe = fuelleMitLeerzeichen(value.toString());
-        nezhaInternalOLED.show(ausgabe, line, nezhaInternalOLED.ShowAlign.Left, nezhaInternalOLED.FontSelection.Normal);
+    export function zeigeZahl(zahl: number, zeile: number): void {
+        nezhaOled.writeLine("" + zahl, zeile);
     }
 
     /**
-     * Zeigt eine Kombination aus Text und Zahl auf einer Zeile an.
-     * Der Doppelpunkt und das Leerzeichen werden automatisch eingefügt (z. B. "Abstand: 350").
-     * @param text Der beschreibende Text
-     * @param value Der zugehörige Wert
-     * @param line Die Zeilennummer (1-8)
+     * Zeigt eine Beschriftung und eine Zahl in einer Zeile an, z. B. "Abstand: 350".
+     * @param text die Beschriftung
+     * @param zahl der zugehörige Wert
+     * @param zeile Zeilennummer (1-8)
      */
-    //% block="zeige %text und Zahl %value in Zeile %line"
-    //% line.min=1 line.max=8 line.defl=3
+    //% blockId=nezhamaze_oled_label_number
+    //% block="zeige $text : $zahl in Zeile $zeile"
+    //% text.defl="Abstand"
+    //% zeile.min=1 zeile.max=8 zeile.defl=3
     //% weight=70
-    export function zeigeTextUndZahl(text: string, value: number, line: number): void {
-        let textTeil = text + ": " + value;
-        let ausgabe = fuelleMitLeerzeichen(textTeil);
-        nezhaInternalOLED.show(ausgabe, line, nezhaInternalOLED.ShowAlign.Left, nezhaInternalOLED.FontSelection.Normal);
+    export function zeigeTextUndZahl(text: string, zahl: number, zeile: number): void {
+        nezhaOled.writeLine(text + ": " + zahl, zeile);
+    }
+
+    /**
+     * Löscht eine Zeile des Displays.
+     * @param zeile Zeilennummer (1-8)
+     */
+    //% blockId=nezhamaze_oled_clear_line
+    //% block="lösche Zeile $zeile"
+    //% zeile.min=1 zeile.max=8 zeile.defl=1
+    //% weight=60
+    export function loescheZeile(zeile: number): void {
+        nezhaOled.writeLine("", zeile);
     }
 
     /**
      * Löscht den gesamten Inhalt des Displays.
      */
+    //% blockId=nezhamaze_oled_clear
     //% block="lösche Display"
-    //% weight=60
-    export function loescheDisplay(): void {
-        nezhaInternalOLED.clear();
-    }
-    
-    /**
-     * Löscht eine bestimmte Zeile auf dem Display.
-     * @param line Die zu löschende Zeilennummer (1-8)
-     */
-    //% block="lösche Text in Zeile %line"
-    //% line.min=1 line.max=8 line.defl=1
     //% weight=50
-    export function loescheZeile(line: number): void {
-        nezhaInternalOLED.clearLine(line);
+    export function loescheDisplay(): void {
+        nezhaOled.clear();
     }
 }

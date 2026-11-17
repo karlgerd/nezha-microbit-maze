@@ -1,43 +1,13 @@
 /**
- * Interne Treiberbibliothek für den VL53L1X ToF-Sensor in Verbindung mit einem TCA9548A I2C-Multiplexer (Pa.Hub).
- * Nicht für Endbenutzer im Block-Menü sichtbar.
+ * Interner Treiber für VL53L1X ToF-Abstandssensoren am Pa.Hub (Kanäle 0-5).
+ * Nicht im Block-Menü sichtbar.
  */
-namespace nezhaInternalSensors{
-    export type ResultBuffer = {
-        range_status: number
-        stream_count: number
-        dss_actual_effective_spads_sd0: number
-        ambient_count_rate_mcps_sd0: number
-        final_crosstalk_corrected_range_mm_sd0: number
-        peak_signal_count_rate_crosstalk_corrected_mcps_sd0: number
-    }
-	
-    export enum RangeStatus {
-        RangeValid = 0,
-        SigmaFail = 1,
-        SignalFail = 2,
-        RangeValidMinRangeClipped = 3,
-        OutOfBoundsFail = 4,
-        HardwareFail = 5,
-        RangeValidNoWrapCheckFail = 6,
-        WrapTargetFail = 7,
-        XtalkSignalFail = 9,
-        SynchronizationInt = 10,
-        MinRangeFail = 13,
-        None = 255,
-    }
-	
-    export enum DistanceMode {
-        Short, Medium, Long,
-    }
+namespace nezhaToF {
+    /** Rückgabewert, wenn kein Ziel in Reichweite ist. */
+    export const OUT_OF_RANGE = 9999;
+    /** Rückgabewert, wenn der Sensor nicht antwortet. */
+    export const ERROR = -1;
 
-    type RangingData = {
-        range_mm?: number
-        range_status?: RangeStatus
-        peak_signal_count_rate_MCPS?: number
-        ambient_count_rate_MCPS?: number
-    }
-    
     // Register-Konstanten
     const SOFT_RESET = 0x0000
     const OSC_MEASURED__FAST_OSC__FREQUENCY = 0x0006
@@ -87,72 +57,53 @@ namespace nezhaInternalSensors{
     const PHASECAL_RESULT__VCSEL_START = 0x00D8
     const RESULT__OSC_CALIBRATE_VAL = 0x00DE
     const FIRMWARE__SYSTEM_STATUS = 0x00E5
-    
-    const TargetRate = 0x0A00
-    const TimingGuard = 4528
-    const i2cAddr = 0x29
-    const paHubAddr = 0x70
-    const io_timeout = 500
 
-    // Kanalspezifische Statusvariablen für 6 Multiplexer-Kanäle (0-5)
+    const RANGE_STATUS_OUT_OF_BOUNDS = 4
+    const TARGET_RATE = 0x0A00
+    const TIMING_GUARD = 4528
+    const TIMING_BUDGET_US = 50000
+    const I2C_ADDR = 0x29
+    const IO_TIMEOUT_MS = 500
+
+    // Kanalspezifischer Zustand für die 6 Pa.Hub-Kanäle
+    let initialised: boolean[] = [false, false, false, false, false, false]
     let calibrated: boolean[] = [false, false, false, false, false, false]
-    let fast_osc_frequency: number[] = [1, 1, 1, 1, 1, 1]
-    let saved_vhv_init: number[] = [0, 0, 0, 0, 0, 0]
-    let saved_vhv_timeout: number[] = [0, 0, 0, 0, 0, 0]
-    let osc_calibrate_val: number[] = [0, 0, 0, 0, 0, 0]
-    
-    // Geteilte temporäre Variablen für den Auslesevorgang
-    let results: ResultBuffer = {
-        range_status:0,
-        stream_count:0,
-        dss_actual_effective_spads_sd0:0,
-        ambient_count_rate_mcps_sd0:0,
-        final_crosstalk_corrected_range_mm_sd0:0,
-        peak_signal_count_rate_crosstalk_corrected_mcps_sd0:0
-    }
-    let ranging_data: RangingData = {}
-    let timeout_start_ms = 0
+    let fastOscFrequency: number[] = [1, 1, 1, 1, 1, 1]
+
+    // Messergebnis des letzten Auslesevorgangs
+    let rangeStatus = 0
+    let spadCount = 0
+    let ambientRate = 0
+    let rangeRaw = 0
+    let peakSignalRate = 0
+
+    let timeoutStartMs = 0
 
     /**
-     * Schaltet den I2C-Multiplexer auf den gewünschten Kanal um (0-5).
+     * Initialisiert den Sensor am angegebenen Kanal.
+     * @returns true, wenn der Sensor geantwortet hat
      */
-    export function selectChannel(channel: number): void {
-        if (channel < 0 || channel > 5) return;
-        let buf = pins.createBuffer(1);
-        buf[0] = 1 << channel;
-        pins.i2cWriteBuffer(paHubAddr, buf);
-    }
+    export function init(channel: number): boolean {
+        if (!nezhaPaHub.isValidChannel(channel)) return false;
+        nezhaPaHub.selectChannel(channel);
+        initialised[channel] = false;
+        calibrated[channel] = false;
 
-    /**
-     * Deaktiviert alle Kanäle am Hub.
-     */
-    export function disableAllChannels(): void {
-        let buf = pins.createBuffer(1);
-        buf[0] = 0;
-        pins.i2cWriteBuffer(paHubAddr, buf);
-    }
-
-    export function init(channel: number): void {
-        if (channel < 0 || channel > 5) return;
-        selectChannel(channel);
-        
         writeReg(SOFT_RESET, 0x00)
         basic.pause(1)
         writeReg(SOFT_RESET, 0x01)
         basic.pause(1)
-        
+
         startTimeout()
         while ((readReg(FIRMWARE__SYSTEM_STATUS) & 0x01) == 0) {
-            if (checkTimeoutExpired()) {
-                return
-            }
+            if (timeoutExpired()) return false
         }
-        
+
         writeReg(PAD_I2C_HV__EXTSUP_CONFIG, readReg(PAD_I2C_HV__EXTSUP_CONFIG) | 0x01)
-        fast_osc_frequency[channel] = readReg16Bit(OSC_MEASURED__FAST_OSC__FREQUENCY)
-        osc_calibrate_val[channel] = readReg16Bit(RESULT__OSC_CALIBRATE_VAL)
-        
-        writeReg16Bit(DSS_CONFIG__TARGET_TOTAL_RATE_MCPS, TargetRate)
+        fastOscFrequency[channel] = readReg16Bit(OSC_MEASURED__FAST_OSC__FREQUENCY)
+        if (fastOscFrequency[channel] == 0) return false
+
+        writeReg16Bit(DSS_CONFIG__TARGET_TOTAL_RATE_MCPS, TARGET_RATE)
         writeReg(GPIO__TIO_HV_STATUS, 0x02)
         writeReg(SIGMA_ESTIMATOR__EFFECTIVE_PULSE_WIDTH_NS, 8)
         writeReg(SIGMA_ESTIMATOR__EFFECTIVE_AMBIENT_WIDTH_NS, 16)
@@ -177,132 +128,100 @@ namespace nezhaInternalSensors{
         writeReg(SYSTEM__SEQUENCE_CONFIG, 0x8B)
         writeReg16Bit(DSS_CONFIG__MANUAL_EFFECTIVE_SPADS_SELECT, 200 << 8)
         writeReg(DSS_CONFIG__ROI_MODE_CONTROL, 2)
-        
-        setDistanceMode(channel, DistanceMode.Long)
-        setMeasurementTimingBudget(channel, 50000)
+
+        setLongDistanceMode()
+        setMeasurementTimingBudget(channel, TIMING_BUDGET_US)
         writeReg16Bit(ALGO__PART_TO_PART_RANGE_OFFSET_MM, readReg16Bit(MM_CONFIG__OUTER_OFFSET_MM) * 4)
+
+        initialised[channel] = true
+        return true
     }
 
-	export function setDistanceMode(channel: number, mode: DistanceMode): void {
-        if (channel < 0 || channel > 5) return;
-        selectChannel(channel);
-		switch (mode)
-			{
-            case DistanceMode.Short:
-			  writeReg(RANGE_CONFIG__VCSEL_PERIOD_A, 0x07);
-			  writeReg(RANGE_CONFIG__VCSEL_PERIOD_B, 0x05);
-			  writeReg(RANGE_CONFIG__VALID_PHASE_HIGH, 0x38);
-			  writeReg(SD_CONFIG__WOI_SD0, 0x07);
-			  writeReg(SD_CONFIG__WOI_SD1, 0x05);
-			  writeReg(SD_CONFIG__INITIAL_PHASE_SD0, 6);
-			  writeReg(SD_CONFIG__INITIAL_PHASE_SD1, 6);
-			  break;
+    /**
+     * Führt eine Einzelmessung durch.
+     * @returns Abstand in mm, OUT_OF_RANGE (9999) ohne Ziel, ERROR (-1) bei Sensorfehler
+     */
+    export function readSingle(channel: number): number {
+        if (!nezhaPaHub.isValidChannel(channel)) return ERROR;
+        if (!initialised[channel] && !init(channel)) return ERROR;
+        nezhaPaHub.selectChannel(channel);
 
-            case DistanceMode.Medium:
-			  writeReg(RANGE_CONFIG__VCSEL_PERIOD_A, 0x0B);
-			  writeReg(RANGE_CONFIG__VCSEL_PERIOD_B, 0x09);
-			  writeReg(RANGE_CONFIG__VALID_PHASE_HIGH, 0x78);
-			  writeReg(SD_CONFIG__WOI_SD0, 0x0B);
-			  writeReg(SD_CONFIG__WOI_SD1, 0x09);
-			  writeReg(SD_CONFIG__INITIAL_PHASE_SD0, 10);
-			  writeReg(SD_CONFIG__INITIAL_PHASE_SD1, 10);
-			  break;
+        writeReg(SYSTEM__INTERRUPT_CLEAR, 0x01)
+        writeReg(SYSTEM__MODE_START, 0x10)
 
-            case DistanceMode.Long:
-			  writeReg(RANGE_CONFIG__VCSEL_PERIOD_A, 0x0F);
-			  writeReg(RANGE_CONFIG__VCSEL_PERIOD_B, 0x0D);
-			  writeReg(RANGE_CONFIG__VALID_PHASE_HIGH, 0xB8);
-			  writeReg(SD_CONFIG__WOI_SD0, 0x0F);
-			  writeReg(SD_CONFIG__WOI_SD1, 0x0D);
-			  writeReg(SD_CONFIG__INITIAL_PHASE_SD0, 14);
-			  writeReg(SD_CONFIG__INITIAL_PHASE_SD1, 14);
-			  break;
-
-			default:
-			}
-		setMeasurementTimingBudget(channel, 50000);
-	}
-
-    export function setMeasurementTimingBudget(channel: number, budget_us: number): void {
-        if (channel < 0 || channel > 5) return;
-        selectChannel(channel);
-        if (budget_us <= TimingGuard) { return }
-        budget_us -= TimingGuard
-        let range_config_timeout_us = budget_us
-        if (range_config_timeout_us > 1100000) { return }
-        range_config_timeout_us = Math.floor(range_config_timeout_us/2)
-        
-        let macro_period_us = calcMacroPeriod(channel, readReg(RANGE_CONFIG__VCSEL_PERIOD_A))
-        let phasecal_timeout_mclks = timeoutMicrosecondsToMclks(1000, macro_period_us)
-        if (phasecal_timeout_mclks > 0xFF) { phasecal_timeout_mclks = 0xFF }
-        
-        writeReg(PHASECAL_CONFIG__TIMEOUT_MACROP, phasecal_timeout_mclks)
-        writeReg16Bit(MM_CONFIG__TIMEOUT_MACROP_A, encodeTimeout(timeoutMicrosecondsToMclks(1, macro_period_us)))
-        writeReg16Bit(RANGE_CONFIG__TIMEOUT_MACROP_A, encodeTimeout(timeoutMicrosecondsToMclks(range_config_timeout_us, macro_period_us)))
-        
-        macro_period_us = calcMacroPeriod(channel, readReg(RANGE_CONFIG__VCSEL_PERIOD_B))
-        writeReg16Bit(MM_CONFIG__TIMEOUT_MACROP_B, encodeTimeout(timeoutMicrosecondsToMclks(1, macro_period_us)))
-        writeReg16Bit(RANGE_CONFIG__TIMEOUT_MACROP_B, encodeTimeout(timeoutMicrosecondsToMclks(range_config_timeout_us, macro_period_us)))
-    }
-
-    function read(channel: number): number {
         startTimeout()
         while (!dataReady()) {
-            if (checkTimeoutExpired()) {
-                return 0
-            }
+            if (timeoutExpired()) return ERROR
         }
         readResults()
         if (!calibrated[channel]) {
-            setupManualCalibration(channel)
+            setupManualCalibration()
             calibrated[channel] = true
         }
         updateDSS()
-        let range = results.final_crosstalk_corrected_range_mm_sd0
-        ranging_data.range_mm = Math.floor((range * 2011 + 0x0400) / 0x0800)
         writeReg(SYSTEM__INTERRUPT_CLEAR, 0x01)
-        if (results.range_status == 4) ranging_data.range_mm = 9999
-        return ranging_data.range_mm
+
+        if (rangeStatus == RANGE_STATUS_OUT_OF_BOUNDS) return OUT_OF_RANGE
+        return Math.floor((rangeRaw * 2011 + 0x0400) / 0x0800)
     }
 
-    export function readSingle(channel: number): number {
-        if (channel < 0 || channel > 5) return 0;
-        selectChannel(channel);
-        writeReg(SYSTEM__INTERRUPT_CLEAR, 0x01)
-        writeReg(SYSTEM__MODE_START, 0x10)
-        return read(channel)
+    function setLongDistanceMode(): void {
+        writeReg(RANGE_CONFIG__VCSEL_PERIOD_A, 0x0F)
+        writeReg(RANGE_CONFIG__VCSEL_PERIOD_B, 0x0D)
+        writeReg(RANGE_CONFIG__VALID_PHASE_HIGH, 0xB8)
+        writeReg(SD_CONFIG__WOI_SD0, 0x0F)
+        writeReg(SD_CONFIG__WOI_SD1, 0x0D)
+        writeReg(SD_CONFIG__INITIAL_PHASE_SD0, 14)
+        writeReg(SD_CONFIG__INITIAL_PHASE_SD1, 14)
     }
-    
-    function setupManualCalibration(channel: number): void {
-        saved_vhv_init[channel] = readReg(VHV_CONFIG__INIT)
-        saved_vhv_timeout[channel] = readReg(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND)
-        writeReg(VHV_CONFIG__INIT, saved_vhv_init[channel] & 0x7F)
-        writeReg(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, (saved_vhv_timeout[channel] & 0x03) + (3 << 2))
+
+    function setMeasurementTimingBudget(channel: number, budgetUs: number): void {
+        if (budgetUs <= TIMING_GUARD) return
+        let rangeConfigTimeoutUs = budgetUs - TIMING_GUARD
+        if (rangeConfigTimeoutUs > 1100000) return
+        rangeConfigTimeoutUs = Math.floor(rangeConfigTimeoutUs / 2)
+
+        let macroPeriodUs = calcMacroPeriod(channel, readReg(RANGE_CONFIG__VCSEL_PERIOD_A))
+        let phasecalTimeoutMclks = timeoutMicrosecondsToMclks(1000, macroPeriodUs)
+        if (phasecalTimeoutMclks > 0xFF) phasecalTimeoutMclks = 0xFF
+
+        writeReg(PHASECAL_CONFIG__TIMEOUT_MACROP, phasecalTimeoutMclks)
+        writeReg16Bit(MM_CONFIG__TIMEOUT_MACROP_A, encodeTimeout(timeoutMicrosecondsToMclks(1, macroPeriodUs)))
+        writeReg16Bit(RANGE_CONFIG__TIMEOUT_MACROP_A, encodeTimeout(timeoutMicrosecondsToMclks(rangeConfigTimeoutUs, macroPeriodUs)))
+
+        macroPeriodUs = calcMacroPeriod(channel, readReg(RANGE_CONFIG__VCSEL_PERIOD_B))
+        writeReg16Bit(MM_CONFIG__TIMEOUT_MACROP_B, encodeTimeout(timeoutMicrosecondsToMclks(1, macroPeriodUs)))
+        writeReg16Bit(RANGE_CONFIG__TIMEOUT_MACROP_B, encodeTimeout(timeoutMicrosecondsToMclks(rangeConfigTimeoutUs, macroPeriodUs)))
+    }
+
+    function setupManualCalibration(): void {
+        let vhvInit = readReg(VHV_CONFIG__INIT)
+        let vhvTimeout = readReg(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND)
+        writeReg(VHV_CONFIG__INIT, vhvInit & 0x7F)
+        writeReg(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, (vhvTimeout & 0x03) + (3 << 2))
         writeReg(PHASECAL_CONFIG__OVERRIDE, 0x01)
         writeReg(CAL_CONFIG__VCSEL_START, readReg(PHASECAL_RESULT__VCSEL_START))
     }
 
     function readResults(): void {
-        pins.i2cWriteNumber(i2cAddr, RESULT__RANGE_STATUS, NumberFormat.UInt16BE, false)
-        let buf = pins.i2cReadBuffer(i2cAddr, 17, false)
-        results.range_status = buf.getNumber(NumberFormat.UInt8BE, 0)
-        results.stream_count = buf.getNumber(NumberFormat.UInt8BE, 2)
-        results.dss_actual_effective_spads_sd0 = buf.getNumber(NumberFormat.UInt16BE, 3)
-        results.ambient_count_rate_mcps_sd0 = buf.getNumber(NumberFormat.UInt16BE, 7)
-        results.final_crosstalk_corrected_range_mm_sd0 = buf.getNumber(NumberFormat.UInt16BE, 13)
-        results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0 = buf.getNumber(NumberFormat.UInt16BE, 15)
+        pins.i2cWriteNumber(I2C_ADDR, RESULT__RANGE_STATUS, NumberFormat.UInt16BE, false)
+        let buf = pins.i2cReadBuffer(I2C_ADDR, 17, false)
+        rangeStatus = buf.getNumber(NumberFormat.UInt8BE, 0)
+        spadCount = buf.getNumber(NumberFormat.UInt16BE, 3)
+        ambientRate = buf.getNumber(NumberFormat.UInt16BE, 7)
+        rangeRaw = buf.getNumber(NumberFormat.UInt16BE, 13)
+        peakSignalRate = buf.getNumber(NumberFormat.UInt16BE, 15)
     }
 
     function updateDSS(): void {
-        let spadCount = results.dss_actual_effective_spads_sd0
         if (spadCount != 0) {
-            let totalRatePerSpad = results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0 + results.ambient_count_rate_mcps_sd0
-            if (totalRatePerSpad > 0xFFFF) { totalRatePerSpad = 0xFFFF }
+            let totalRatePerSpad = peakSignalRate + ambientRate
+            if (totalRatePerSpad > 0xFFFF) totalRatePerSpad = 0xFFFF
             totalRatePerSpad <<= 16
             totalRatePerSpad = Math.floor(totalRatePerSpad / spadCount)
             if (totalRatePerSpad != 0) {
-                let requiredSpads = Math.floor((TargetRate << 16) / totalRatePerSpad)
-                if (requiredSpads > 0xFFFF || requiredSpads<0) { requiredSpads = 0xFFFF }
+                let requiredSpads = Math.floor((TARGET_RATE << 16) / totalRatePerSpad)
+                if (requiredSpads > 0xFFFF || requiredSpads < 0) requiredSpads = 0xFFFF
                 writeReg16Bit(DSS_CONFIG__MANUAL_EFFECTIVE_SPADS_SELECT, requiredSpads)
                 return
             }
@@ -314,74 +233,54 @@ namespace nezhaInternalSensors{
         let buf = pins.createBuffer(3)
         buf.setNumber(NumberFormat.UInt16BE, 0, reg)
         buf.setNumber(NumberFormat.UInt8BE, 2, d)
-        pins.i2cWriteBuffer(i2cAddr, buf, false)
+        pins.i2cWriteBuffer(I2C_ADDR, buf, false)
     }
 
     function writeReg16Bit(reg: number, d: number): void {
-        let tmp = (reg << 16) | d
-        pins.i2cWriteNumber(i2cAddr, tmp, NumberFormat.UInt32BE, false)
-    }
-
-    function writeReg32Bit(reg: number, d: number): void {
-        let buf = pins.createBuffer(6)
-        buf.setNumber(NumberFormat.UInt16BE, 0, reg)
-        buf.setNumber(NumberFormat.UInt32BE, 2, d)
-        pins.i2cWriteBuffer(i2cAddr, buf, false)
+        pins.i2cWriteNumber(I2C_ADDR, (reg << 16) | d, NumberFormat.UInt32BE, false)
     }
 
     function readReg(reg: number): number {
-        pins.i2cWriteNumber(i2cAddr, reg, NumberFormat.UInt16BE, false)
-        let d = pins.i2cReadNumber(i2cAddr, NumberFormat.UInt8BE, false)
-        return d
+        pins.i2cWriteNumber(I2C_ADDR, reg, NumberFormat.UInt16BE, false)
+        return pins.i2cReadNumber(I2C_ADDR, NumberFormat.UInt8BE, false)
     }
 
     function readReg16Bit(reg: number): number {
-        pins.i2cWriteNumber(i2cAddr, reg, NumberFormat.UInt16BE, false)
-        let d = pins.i2cReadNumber(i2cAddr, NumberFormat.UInt16BE, false)
-        return d
+        pins.i2cWriteNumber(I2C_ADDR, reg, NumberFormat.UInt16BE, false)
+        return pins.i2cReadNumber(I2C_ADDR, NumberFormat.UInt16BE, false)
     }
 
-    function readReg32Bit(reg: number): number {
-        pins.i2cWriteNumber(i2cAddr, reg, NumberFormat.UInt16BE, false)
-        let d = pins.i2cReadNumber(i2cAddr, NumberFormat.UInt32BE, false)
-        return d
-    }
-
-    function encodeTimeout(timeout_mclks: number): number {
-        let ls_byte = 0
-        let ms_byte = 0
-        if (timeout_mclks > 0) {
-            ls_byte = timeout_mclks - 1
-            while ((ls_byte & 0xFFFFFF00) > 0) {
-                ls_byte >>= 1
-                ms_byte++
-            }
-            return (ms_byte << 8) | (ls_byte & 0xFF)
-        } else {
-            return 0
+    function encodeTimeout(timeoutMclks: number): number {
+        if (timeoutMclks <= 0) return 0
+        let lsByte = timeoutMclks - 1
+        let msByte = 0
+        while ((lsByte & 0xFFFFFF00) > 0) {
+            lsByte >>= 1
+            msByte++
         }
+        return (msByte << 8) | (lsByte & 0xFF)
     }
 
-    function timeoutMicrosecondsToMclks(timeout_us: number, macro_period_us: number): number {
-        return Math.floor(((timeout_us << 12) + (macro_period_us >> 1)) / macro_period_us)
+    function timeoutMicrosecondsToMclks(timeoutUs: number, macroPeriodUs: number): number {
+        return Math.floor(((timeoutUs << 12) + (macroPeriodUs >> 1)) / macroPeriodUs)
     }
 
-    function calcMacroPeriod(channel: number, vcsel_period: number): number {
-        let pll_period_us = Math.floor((0x01 << 30) / fast_osc_frequency[channel])
-        let vcsel_period_pclks = (vcsel_period + 1) << 1
-        let macro_period_us = 2304 * pll_period_us
-        macro_period_us >>= 6
-        macro_period_us *= vcsel_period_pclks
-        macro_period_us >>= 6
-        return macro_period_us
+    function calcMacroPeriod(channel: number, vcselPeriod: number): number {
+        let pllPeriodUs = Math.floor((0x01 << 30) / fastOscFrequency[channel])
+        let vcselPeriodPclks = (vcselPeriod + 1) << 1
+        let macroPeriodUs = 2304 * pllPeriodUs
+        macroPeriodUs >>= 6
+        macroPeriodUs *= vcselPeriodPclks
+        macroPeriodUs >>= 6
+        return macroPeriodUs
     }
 
     function startTimeout(): void {
-        timeout_start_ms = input.runningTime()
+        timeoutStartMs = input.runningTime()
     }
 
-    function checkTimeoutExpired(): boolean {
-        return (io_timeout > 0) && ((input.runningTime() - timeout_start_ms) > io_timeout)
+    function timeoutExpired(): boolean {
+        return (input.runningTime() - timeoutStartMs) > IO_TIMEOUT_MS
     }
 
     function dataReady(): boolean {

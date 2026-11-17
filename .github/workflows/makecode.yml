@@ -1,0 +1,22 @@
+name: MakeCode-Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: pxt installieren
+        run: npm install -g pxt
+      - name: micro:bit-Target laden
+        run: pxt target microbit
+      - name: Abhängigkeiten installieren
+        run: pxt install
+      - name: Erweiterung und test.ts bauen
+        run: pxt build --cloud

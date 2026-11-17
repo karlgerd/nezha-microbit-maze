@@ -1,10 +1,15 @@
 /**
- * Interne Treiberbibliothek für das Seed Grove OLED SSD1315 (128x64).
- * Reduziert auf reine Textausgabe. Nicht für Endbenutzer im Block-Menü sichtbar.
+ * Interner Treiber für das Grove OLED 128x64 (SSD1315 / SSD1306, I2C 0x3C).
+ * Reine Textausgabe: 8 Zeilen mit je 25 Zeichen (5x5-Schrift).
+ * Nicht im Block-Menü sichtbar.
  */
-namespace nezhaInternalOLED {
-    
-    // ASCII Code to OLED 5x8 pixel character for display conversion
+namespace nezhaOled {
+    const DISPLAY_ADDR = 0x3C;
+    export const LINES = 8;
+    export const CHARS_PER_LINE = 25;
+    const CHAR_WIDTH = 5;
+
+    // 5x5-Zeichensatz für ASCII 0-127. Bit (5 * Spalte + Zeile) ist ein gesetzter Pixel.
     const font: number[] = [
         0x0022d422, 0x0022d422, 0x0022d422, 0x0022d422, 0x0022d422, 0x0022d422, 0x0022d422, 0x0022d422,
         0x0022d422, 0x0022d422, 0x0022d422, 0x0022d422, 0x0022d422, 0x0022d422, 0x0022d422, 0x0022d422,
@@ -23,227 +28,101 @@ namespace nezhaInternalOLED {
         0x0002295e, 0x000f2944, 0x0001085c, 0x00012a90, 0x010a51e0, 0x010f420e, 0x00644106, 0x01e8221e,
         0x00093192, 0x00222292, 0x00095b52, 0x0008fc80, 0x000003e0, 0x000013f1, 0x00841080, 0x0022d422
     ];
+    // Ersatzzeichen für unbekannte Zeichen (Kästchen)
+    const UNKNOWN_GLYPH = 0x0022d422;
 
-    export enum ShowAlign {
-        Left,
-        Centre,
-        Right
-    }
-
-    export enum FontSelection {
-        Normal,
-        Big
-    }
-
-    // Standard I2C Adresse für Grove OLED / SSD1315 (0x3C = 60)
-    const DISPLAY_ADDR = 60;
-    
-    let numberOfCharPerLine = 25;
-    let fontZoom = 1;
-    let globalZoomSet = false;
-    let initialised = 0;
-
+    let initialised = false;
+    // 1 Steuerbyte + 8 Seiten x 128 Spalten
     let screenBuf = pins.createBuffer(1025);
-    let writeOneByteBuf = pins.createBuffer(2);
-    let writeTwoByteBuf = pins.createBuffer(3);
-    let writeThreeByteBuf = pins.createBuffer(4);
 
-    function writeOneByte(regValue: number) {
-        writeOneByteBuf[0] = 0;
-        writeOneByteBuf[1] = regValue;
-        pins.i2cWriteBuffer(DISPLAY_ADDR, writeOneByteBuf);
+    /** Liefert das Pixelmuster eines Zeichens, inklusive deutscher Sonderzeichen. */
+    function glyph(code: number): number {
+        if (code < 128) return font[code];
+        switch (code) {
+            case 0xE4: return 0x010fca4d; // ä
+            case 0xF6: return 0x0006ca4d; // ö
+            case 0xFC: return 0x010ec20d; // ü
+            case 0xC4: return 0x000ea95d; // Ä
+            case 0xD6: return 0x0006ca4d; // Ö
+            case 0xDC: return 0x0006c20d; // Ü
+            case 0xDF: return 0x000d543e; // ß
+            case 0xB0: return 0x000008a2; // °
+            default: return UNKNOWN_GLYPH;
+        }
     }
 
-    function writeTwoByte(regValue1: number, regValue2: number) {
-        writeTwoByteBuf[0] = 0;
-        writeTwoByteBuf[1] = regValue1;
-        writeTwoByteBuf[2] = regValue2;
-        pins.i2cWriteBuffer(DISPLAY_ADDR, writeTwoByteBuf);
+    function command(value: number): void {
+        pins.i2cWriteNumber(DISPLAY_ADDR, value, NumberFormat.UInt16BE);
     }
 
-    function writeThreeByte(regValue1: number, regValue2: number, regValue3: number) {
-        writeThreeByteBuf[0] = 0;
-        writeThreeByteBuf[1] = regValue1;
-        writeThreeByteBuf[2] = regValue2;
-        writeThreeByteBuf[3] = regValue3;
-        pins.i2cWriteBuffer(DISPLAY_ADDR, writeThreeByteBuf);
+    function commands(values: number[]): void {
+        for (let v of values) command(v);
     }
 
-    function set_pos(col: number = 0, page: number = 0) {
-        writeOneByte(0xb0 | page);
-        writeOneByte(0x00 | (col % 16));
-        writeOneByte(0x10 | (col >> 4));
+    function setPosition(column: number, page: number): void {
+        commands([0xB0 | page, 0x00 | (column & 0x0F), 0x10 | (column >> 4)]);
     }
 
     export function init(): void {
-        if (initialised == 1) return;
-
-        writeOneByte(0xAE);              // SSD1306_DISPLAYOFF
-        writeOneByte(0xA4);              // SSD1306_DISPLAYALLON_RESUME
-        writeTwoByte(0xD5, 0xF0);        // SSD1306_SETDISPLAYCLOCKDIV
-        writeTwoByte(0xA8, 0x3F);        // SSD1306_SETMULTIPLEX
-        writeTwoByte(0xD3, 0x00);        // SSD1306_SETDISPLAYOFFSET
-        writeOneByte(0 | 0x0);           // line #SSD1306_SETSTARTLINE
-        writeTwoByte(0x8D, 0x14);        // SSD1306_CHARGEPUMP
-        writeTwoByte(0x20, 0x00);        // SSD1306_MEMORYMODE
-        writeThreeByte(0x21, 0, 127);    // SSD1306_COLUMNADDR
-        writeThreeByte(0x22, 0, 63);     // SSD1306_PAGEADDR
-        writeOneByte(0xa0 | 0x1);        // SSD1306_SEGREMAP
-        writeOneByte(0xc8);              // SSD1306_COMSCANDEC
-        writeTwoByte(0xDA, 0x12);        // SSD1306_SETCOMPINS
-        writeTwoByte(0x81, 0xCF);        // SSD1306_SETCONTRAST
-        writeTwoByte(0xd9, 0xF1);        // SSD1306_SETPRECHARGE
-        writeTwoByte(0xDB, 0x40);        // SSD1306_SETVCOMDETECT
-        writeOneByte(0xA6);              // SSD1306_NORMALDISPLAY
-        writeTwoByte(0xD6, 0);           // Zoom is set to off
-        writeOneByte(0xAF);              // SSD1306_DISPLAYON
-        
-        initialised = 1;
+        if (initialised) return;
+        commands([
+            0xAE,               // Display aus
+            0xA4,               // Anzeige folgt RAM-Inhalt
+            0xD5, 0xF0,         // Taktteiler
+            0xA8, 0x3F,         // Multiplex 1:64
+            0xD3, 0x00,         // kein Display-Offset
+            0x40,               // Startzeile 0
+            0x8D, 0x14,         // Ladungspumpe an
+            0x20, 0x00,         // horizontale Adressierung
+            0x21, 0, 127,       // Spaltenbereich
+            0x22, 0, 63,        // Seitenbereich
+            0xA1,               // Segmente spiegeln
+            0xC8,               // COM-Scan umgekehrt
+            0xDA, 0x12,         // COM-Pins
+            0x81, 0xCF,         // Kontrast
+            0xD9, 0xF1,         // Precharge
+            0xDB, 0x40,         // VCOM-Pegel
+            0xA6,               // normale (nicht invertierte) Darstellung
+            0xD6, 0x00,         // Zoom aus (SSD1315)
+            0xAF                // Display an
+        ]);
+        initialised = true;
         clear();
     }
 
-    export function setFontSize(fontSize: FontSelection) {
-        if (initialised == 0) init();
-        globalZoomSet = true;
-
-        if (fontSize == FontSelection.Big) {
-            numberOfCharPerLine = 12;
-            fontZoom = 2;
-        } else {
-            numberOfCharPerLine = 25;
-            fontZoom = 1;
-        }
-    }
-
-    export function clear() {
-        if (initialised == 0) init();
-
+    export function clear(): void {
+        if (!initialised) init();
         screenBuf.fill(0);
         screenBuf[0] = 0x40;
-        set_pos();
+        setPosition(0, 0);
         pins.i2cWriteBuffer(DISPLAY_ADDR, screenBuf);
     }
 
-    export function clearLine(line: number) {
-        if (initialised == 0) init();
+    /**
+     * Schreibt einen Text in eine Zeile (1-8). Die Zeile wird vollständig
+     * überschrieben: kürzere Texte werden mit Leerzeichen aufgefüllt,
+     * längere nach 25 Zeichen abgeschnitten.
+     */
+    export function writeLine(text: string, line: number): void {
+        if (!initialised) init();
+        let page = Math.clamp(1, LINES, Math.floor(line)) - 1;
+        let base = page * 128;
 
-        if (fontZoom == 1) {
-            show("                         ", line);
-        } else {
-            show("            ", line);
-        }
-    }
-
-    export function show(inputString: string, line?: number, displayShowAlign?: ShowAlign, fontSize?: FontSelection) {
-        let x = 0;
-        let y = 0;
-
-        if (initialised == 0) init();
-
-        if (!displayShowAlign) displayShowAlign = ShowAlign.Left;
-
-        if (!globalZoomSet && fontSize && fontSize == FontSelection.Big) {
-            numberOfCharPerLine = 12;
-            fontZoom = 2;
-        } else if (!globalZoomSet) {
-            numberOfCharPerLine = 25;
-            fontZoom = 1;
-        }
-
-        if (!line) {
-            y = 0;
-        } else if (fontZoom == 1) {
-            y = line - 1;
-            if (y < 0) y = 0;
-            if (y > 7) y = 7;
-        } else {
-            if (line == 1) y = 0;
-            else if (line == 2) y = 2;
-            else if (line == 3) y = 4;
-            else y = 6;
-        }
-
-        let stringArray: string[] = [];
-        let numberOfStrings = 0;
-        let i = 0;
-
-        while (i < inputString.length) {
-            if (inputString.length - i <= numberOfCharPerLine) {
-                stringArray[numberOfStrings] = inputString.substr(i, inputString.length - i);
-                numberOfStrings++;
-                i = inputString.length;
-            } else {
-                stringArray[numberOfStrings] = inputString.substr(i, numberOfCharPerLine);
-                numberOfStrings++;
-                i += numberOfCharPerLine;
-            }
-        }
-
-        let charBytes = 0;
-        let column1 = 0;
-        let column2 = 0;
-        let bufferIndex = 0;
-
-        for (let textLine = 0; textLine < numberOfStrings; textLine++) {
-            let displayString = stringArray[textLine];
-
-            if (displayString.length < numberOfCharPerLine) {
-                if (displayShowAlign == ShowAlign.Left) {
-                    x = 0;
-                } else if (displayShowAlign == ShowAlign.Centre) {
-                    x = Math.round((numberOfCharPerLine - displayString.length) / 2);
-                } else if (displayShowAlign == ShowAlign.Right) {
-                    x = numberOfCharPerLine - displayString.length;
+        for (let i = 0; i < CHARS_PER_LINE; i++) {
+            let bits = i < text.length ? glyph(text.charCodeAt(i)) : 0;
+            for (let x = 0; x < CHAR_WIDTH; x++) {
+                let column = 0;
+                for (let y = 0; y < 5; y++) {
+                    if (bits & (1 << (CHAR_WIDTH * x + y))) column |= 1 << (y + 1);
                 }
+                screenBuf[base + i * CHAR_WIDTH + x + 1] = column;
             }
-
-            for (let charOfString = 0; charOfString < displayString.length; charOfString++) {
-                charBytes = font[displayString.charCodeAt(charOfString)];
-
-                for (let xIndex = 0; xIndex < 5; xIndex++) {
-                    column1 = 0;
-                    column2 = 0;
-
-                    for (let yIndex = 0; yIndex < 5; yIndex++) {
-                        if (charBytes & (1 << 5 * xIndex + yIndex)) {
-                            if (fontZoom == 1) {
-                                column1 |= 1 << yIndex + 1;
-                            } else if (yIndex < 3) {
-                                column1 |= 1 << yIndex * fontZoom + 1;
-                                column1 |= 1 << yIndex * fontZoom + 2;
-                            } else if (yIndex == 3) {
-                                column1 |= 1 << yIndex * fontZoom + 1;
-                                column2 |= 1 << (yIndex - 3) * fontZoom;
-                            } else {
-                                column2 |= 1 << (yIndex - 4) * fontZoom + 1;
-                                column2 |= 1 << (yIndex - 4) * fontZoom + 2;
-                            }
-                        }
-                    }
-
-                    bufferIndex = (x + charOfString) * 5 * fontZoom + y * 128 + xIndex * fontZoom + 1;
-
-                    if (fontZoom == 1) {
-                        screenBuf[bufferIndex] = column1;
-                    } else {
-                        screenBuf[bufferIndex] = column1;
-                        screenBuf[bufferIndex + 1] = column1;
-                        screenBuf[bufferIndex + 128] = column2;
-                        screenBuf[bufferIndex + 129] = column2;
-                    }
-
-                    if (fontZoom == 2) bufferIndex += 129;
-                }
-            }
-
-            set_pos(x * 5 * fontZoom, y);
-            let start = x * 5 * fontZoom + y * 128;
-            let buf2 = screenBuf.slice(start, bufferIndex + 1);
-            buf2[0] = 0x40;
-            pins.i2cWriteBuffer(DISPLAY_ADDR, buf2);
-
-            if (fontZoom == 1) y++;
-            else y += 2;
         }
+
+        // Eine komplette Seite (128 Spalten) mit vorangestelltem Datensteuerbyte senden
+        let pageBuf = screenBuf.slice(base, 129);
+        pageBuf[0] = 0x40;
+        setPosition(0, page);
+        pins.i2cWriteBuffer(DISPLAY_ADDR, pageBuf);
     }
 }

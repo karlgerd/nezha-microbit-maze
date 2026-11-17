@@ -1,182 +1,171 @@
 /**
- * Sensoren für den Labyrinth-Roboter (Neigung, Farbe, Distanz).
+ * Sensoren für den Labyrinth-Roboter: Abstand (ToF), Farbe (RGB) und Neigung.
  */
 //% color="#942222" icon="\uf1de" block="Sensoren" weight=95
-namespace robotSensors {
+//% groups='["ToF-Abstandssensor", "RGB-Farbsensor", "Neigung"]'
+namespace sensoren {
 
-export enum RgbColor {
+    export enum Farbe {
         //% block="Rot"
-        Red,
+        Rot = 0,
         //% block="Grün"
-        Green,
+        Gruen = 1,
         //% block="Blau"
-        Blue
+        Blau = 2
     }
 
-    export enum RgbRawChannel {
+    export enum Farbkanal {
         //% block="Rot"
-        Red,
+        Rot = 0,
         //% block="Grün"
-        Green,
+        Gruen = 1,
         //% block="Blau"
-        Blue,
-        //% block="Helligkeit (Clear)"
-        Clear
+        Blau = 2,
+        //% block="Helligkeit"
+        Helligkeit = 3
     }
+
+    // ==========================================
+    // ToF-Abstandssensor
+    // ==========================================
 
     /**
-     * Initialisiert den RGB-Farbsensor an einem bestimmten Pa.Hub-Port.
-     * Dieser Block muss vor der ersten Messung ausgeführt werden.
-     * @param channel Der Pin am Pa.Hub (0-5), an dem der Sensor angeschlossen ist.
+     * Initialisiert einen ToF-Abstandssensor am Pa.Hub. Gehört in "beim Start".
+     * Antwortet der Sensor nicht, zeigt der micro:bit ein X und die Portnummer an.
+     * @param port Port am Pa.Hub (0-5)
      */
-    //% group="RGB-Farbsensor"
-    //% block="initialisiere RGB-Sensor an PaHub-Port %channel"
-    //% channel.min=0 channel.max=5 channel.defl=1
-    //% color="#FFC700"
-    //% weight=30
-    export function initialisiereRGB(channel: number): void {
-        nezhaInternalSensors.startRgb(channel);
-    }
-
-    /**
-     * Liest alle Sensorwerte über I2C aus und speichert sie zwischen.
-     * Dieser Block muss vor der Abfrage der Farbwerte aufgerufen werden, um aktuelle Werte zu erhalten.
-     * @param channel Der Pin am Pa.Hub (0-5)
-     */
-    //% group="RGB-Farbsensor"
-    //% block="aktualisiere RGB-Werte an Port %channel"
-    //% channel.min=0 channel.max=5 channel.defl=1
-    //% color="#FFC700"
-    //% weight=25
-    export function aktualisiereRGB(channel: number): void {
-        nezhaInternalSensors.updateRgbValues(channel);
-    }
-
-     /**
-     * Gibt den skalierten Farbwert (0-255) aus dem Zwischenspeicher zurück.
-     * Benötigt vorherigen Aufruf von 'aktualisiere RGB-Sensorwerte'.
-     * @param color Die zu messende Farbe (Rot, Grün oder Blau)
-     * @param channel Der Pin am Pa.Hub (0-5)
-     */
-    //% group="RGB-Farbsensor"
-    //% block="relativer Farbwert (0-255) %color an Port %channel"
-    //% channel.min=0 channel.max=5 channel.defl=1
-    //% color="#FFC700"
-    //% weight=20
-    export function farbwertRGB(color: RgbColor, channel: number): number {
-        if (color === RgbColor.Red) {
-            return nezhaInternalSensors.getRed(channel);
-        } else if (color === RgbColor.Green) {
-            return nezhaInternalSensors.getGreen(channel);
-        } else {
-            return nezhaInternalSensors.getBlue(channel);
+    //% blockId=nezhamaze_tof_init
+    //% block="initialisiere ToF-Sensor an Pa.Hub-Port $port"
+    //% group="ToF-Abstandssensor" weight=100
+    //% port.min=0 port.max=5 port.defl=0
+    export function initialisiereToF(port: number): void {
+        if (!nezhaToF.init(port)) {
+            basic.showIcon(IconNames.No);
+            basic.showNumber(port);
         }
     }
 
     /**
-     * Gibt eine Liste (Array) mit allen vier Rohwerten des RGB-Sensors zurück.
-     * Format der Liste: [Rot, Grün, Blau, Helligkeit]
-     * @param channel Der Pin am Pa.Hub (0-5)
+     * Misst den Abstand in Millimetern.
+     * Liefert 9999, wenn kein Hindernis in Reichweite ist, und -1, wenn der Sensor nicht antwortet.
+     * @param port Port am Pa.Hub (0-5)
      */
-    //% group="RGB-Farbsensor"
-    //% block="Rohwerte als Liste von RGB-Sensor an Port %channel"
-    //% channel.min=0 channel.max=5 channel.defl=1
-    //% color="#FFC700"
-    //% weight=15
-    export function alleRohwerteRGB(channel: number): number[] {
-        return nezhaInternalSensors.getAllRawValues(channel);
+    //% blockId=nezhamaze_tof_distance
+    //% block="Abstand in mm an Port $port"
+    //% group="ToF-Abstandssensor" weight=90
+    //% port.min=0 port.max=5 port.defl=0
+    export function abstandMm(port: number): number {
+        return nezhaToF.readSingle(port);
+    }
+
+    // ==========================================
+    // RGB-Farbsensor
+    // ==========================================
+
+    /**
+     * Initialisiert einen RGB-Farbsensor am Pa.Hub. Gehört in "beim Start".
+     * @param port Port am Pa.Hub (0-5)
+     */
+    //% blockId=nezhamaze_rgb_init
+    //% block="initialisiere RGB-Sensor an Pa.Hub-Port $port"
+    //% group="RGB-Farbsensor" weight=100
+    //% port.min=0 port.max=5 port.defl=1
+    export function initialisiereRGB(port: number): void {
+        nezhaRgb.start(port);
     }
 
     /**
-     * Gibt den absoluten Rohwert (16-Bit) aus dem Zwischenspeicher zurück.
-     * Benötigt vorherigen Aufruf von 'aktualisiere RGB-Sensorwerte'.
-     * @param rawChannel Der Messkanal (Rot, Grün, Blau, Helligkeit)
-     * @param channel Der Pin am Pa.Hub (0-5)
+     * Misst die Farbe und speichert die Werte. Danach liefern die Farbwert-Blöcke die neuen Werte.
+     * @param port Port am Pa.Hub (0-5)
      */
-    //% group="RGB-Farbsensor"
-    //% block="Farb-Rohwert %rawChannel an Port %channel"
-    //% channel.min=0 channel.max=5 channel.defl=1
-    //% color="#FFC700"
-    //% weight=10
-    export function rohwertRGB(rawChannel: RgbRawChannel, channel: number): number {
-        if (rawChannel === RgbRawChannel.Red) {
-            return nezhaInternalSensors.getCachedRedRaw(channel);
-        } else if (rawChannel === RgbRawChannel.Green) {
-            return nezhaInternalSensors.getCachedGreenRaw(channel);
-        } else if (rawChannel === RgbRawChannel.Blue) {
-            return nezhaInternalSensors.getCachedBlueRaw(channel);
-        } else {
-            return nezhaInternalSensors.getCachedClearRaw(channel);
-        }
-    }
-      
-    /**
-     * Initialisiert den ToF-Sensor an einem bestimmten Pa.Hub-Port.
-     * Dieser Block muss im "beim Start"-Block ausgeführt werden, bevor Entfernungen gemessen werden können.
-     * @param channel Der Pin am Pa.Hub (0-5), an dem der Sensor angeschlossen ist.
-     */
-    //% group="ToF-Abstandssensor"
-    //% block="initialisiere ToF-Sensor an PaHub-Port %channel"
-    //% color="#942222"
-    //% channel.min=0 channel.max=5 channel.defl=0
-    //% weight=50
-    export function initialisiereToF(channel: number): void {
-        nezhaInternalSensors.init(channel);
-    }
-    
-     /**
-      * Gibt den gemessenen Abstand des ToF-Sensors in Millimetern (mm) zurück.
-      * @param channel Der Pin am Pa.Hub (0-5), an dem der Sensor angeschlossen ist.
-      */
-    //% group="ToF-Abstandssensor"
-    //% block="Abstand in mm an Port %channel"
-    //% color="#942222"
-    //% channel.min=0 channel.max=5 channel.defl=0
-    //% weight=40
-    export function abstandToF_mm(channel: number): number {
-        return nezhaInternalSensors.readSingle(channel);
+    //% blockId=nezhamaze_rgb_update
+    //% block="miss Farbe an Port $port"
+    //% group="RGB-Farbsensor" weight=90
+    //% port.min=0 port.max=5 port.defl=1
+    export function missFarbe(port: number): void {
+        nezhaRgb.update(port);
     }
 
-    
     /**
-     * Löst aus, wenn der Roboter dauerhaft (1s) nach vorne (bergab) kippt.
-     * Geht davon aus, dass der USB-Anschluss nach vorne zeigt.
+     * Anteil einer Farbe (0-255) an der zuletzt gemessenen Gesamthelligkeit.
+     * Vorher "miss Farbe" ausführen.
+     * @param port Port am Pa.Hub (0-5)
      */
-    //% group="Neigungssensor"
-    //% color="#9EB8A0"
-    //% block="wenn bergab (mit mehr als %grad °)"
+    //% blockId=nezhamaze_rgb_relative
+    //% block="Farbanteil $farbe (0-255) an Port $port"
+    //% group="RGB-Farbsensor" weight=80
+    //% port.min=0 port.max=5 port.defl=1
+    export function farbanteil(farbe: Farbe, port: number): number {
+        return nezhaRgb.relative(port, farbe);
+    }
+
+    /**
+     * Zuletzt gemessener Rohwert (0-65535) eines Farbkanals.
+     * Vorher "miss Farbe" ausführen.
+     * @param port Port am Pa.Hub (0-5)
+     */
+    //% blockId=nezhamaze_rgb_raw
+    //% block="Rohwert $kanal an Port $port"
+    //% group="RGB-Farbsensor" weight=70
+    //% port.min=0 port.max=5 port.defl=1
+    export function rohwert(kanal: Farbkanal, port: number): number {
+        return nezhaRgb.raw(port, kanal);
+    }
+
+    /**
+     * Alle zuletzt gemessenen Rohwerte als Liste: [Rot, Grün, Blau, Helligkeit].
+     * Vorher "miss Farbe" ausführen.
+     * @param port Port am Pa.Hub (0-5)
+     */
+    //% blockId=nezhamaze_rgb_raw_list
+    //% block="Rohwerte als Liste an Port $port"
+    //% group="RGB-Farbsensor" weight=60
+    //% port.min=0 port.max=5 port.defl=1
+    export function rohwerteListe(port: number): number[] {
+        return [
+            nezhaRgb.raw(port, 0),
+            nezhaRgb.raw(port, 1),
+            nezhaRgb.raw(port, 2),
+            nezhaRgb.raw(port, 3)
+        ];
+    }
+
+    // ==========================================
+    // Neigung
+    // ==========================================
+
+    /**
+     * Löst aus, wenn der Roboter 1 Sekunde lang nach vorne (bergab) geneigt ist.
+     * Der USB-Anschluss des micro:bit muss nach vorne zeigen.
+     */
+    //% blockId=nezhamaze_tilt_down
+    //% block="wenn bergab (mehr als $grad °)"
+    //% group="Neigung" weight=100
     //% grad.min=5 grad.max=60 grad.defl=15
-    //% weight=80
     export function wennBergab(grad: number, handler: () => void): void {
-        let thresholdMg = -(Math.sin(grad * Math.PI / 180) * 1024);
-        nezhaInternalSensors.onTiltDown(thresholdMg, handler);
+        nezhaTilt.registerDown(nezhaTilt.degreesToMg(grad), handler);
     }
 
     /**
-     * Löst aus, wenn der Roboter dauerhaft (1s) nach hinten (bergauf) kippt.
-     * Geht davon aus, dass der USB-Anschluss nach vorne zeigt.
+     * Löst aus, wenn der Roboter 1 Sekunde lang nach hinten (bergauf) geneigt ist.
+     * Der USB-Anschluss des micro:bit muss nach vorne zeigen.
      */
-    //% group="Neigungssensor"
-    //% color="#9EB8A0"
-    //% block="wenn bergauf (mit mehr als %grad °)"
+    //% blockId=nezhamaze_tilt_up
+    //% block="wenn bergauf (mehr als $grad °)"
+    //% group="Neigung" weight=90
     //% grad.min=5 grad.max=60 grad.defl=15
-    //% weight=70
     export function wennBergauf(grad: number, handler: () => void): void {
-        let thresholdMg = (Math.sin(grad * Math.PI / 180) * 1024);
-        nezhaInternalSensors.onTiltUp(thresholdMg, handler);
+        nezhaTilt.registerUp(nezhaTilt.degreesToMg(grad), handler);
     }
 
     /**
-    * Löst aus, wenn der Roboter wieder waagerecht steht (Rampe verlassen).
-    * Reagiert sehr schnell (200ms) mit einer Toleranz von unter ca. 11,5 Grad.
-    */
-    //% group="Neigungssensor"
-    //% color="#9EB8A0"
-    //% block="wenn Roboter (wieder) waagerecht steht"
-    //% weight=60
+     * Löst aus, wenn der Roboter wieder waagerecht steht (Neigung unter ca. 11,5°).
+     * Nach einer Fahrt bergauf sofort, sonst nach 1 Sekunde.
+     */
+    //% blockId=nezhamaze_tilt_flat
+    //% block="wenn waagerecht"
+    //% group="Neigung" weight=80
     export function wennWaagerecht(handler: () => void): void {
-        // Schwellenwert ist 200 mg (ca. 11,5 Grad Toleranz) für frühes Umschalten
-        let thresholdMg = 200; 
-        nezhaInternalSensors.onFlat(thresholdMg, handler);
+        nezhaTilt.registerFlat(handler);
     }
 }

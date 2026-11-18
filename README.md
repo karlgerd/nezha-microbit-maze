@@ -16,7 +16,7 @@ Die Erweiterung bringt drei Kategorien mit:
 2. Im Zahnrad-Menü **Erweiterungen** wählen.
 3. `https://github.com/karlgerd/nezha-microbit-maze` in die Suche einfügen und die Erweiterung auswählen.
 
-Eine bestimmte Version lädt man, indem man das Tag anhängt, z. B. `https://github.com/karlgerd/nezha-microbit-maze#v1.0.0`. Für den Unterricht empfiehlt es sich, allen Gruppen dieselbe Version vorzugeben.
+Eine bestimmte Version lädt man, indem man das Tag anhängt, z. B. `https://github.com/karlgerd/nezha-microbit-maze#v1.0.0`. Es wird empfohlen, immer mit der aktuellsten Version zu arbeiten.
 
 ## Hardware
 

@@ -1,7 +1,7 @@
 /**
  * Sensoren für den Labyrinth-Roboter: Abstand (ToF), Farbe (RGB) und Neigung.
  */
-//% color="#942222" icon="\uf1de" block="Sensoren" weight=95
+//% color="#B8460B" icon="\uf1de" block="Robo-Sensoren" weight=114
 //% groups='["ToF-Abstandssensor", "RGB-Farbsensor", "Neigung"]'
 namespace sensoren {
 

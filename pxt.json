@@ -1,6 +1,6 @@
 {
     "name": "nezha-microbit-maze",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Didaktisch reduzierte Blöcke für Rescue-Maze-Roboter mit micro:bit und Elecfreaks Nezha-Board: Motoren, ToF-, Farb- und Neigungssensor, OLED-Anzeige",
     "license": "MIT",
     "dependencies": {

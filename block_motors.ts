@@ -1,7 +1,7 @@
 /**
  * Motorsteuerung für den Labyrinth-Roboter (2 oder 4 Motoren, Panzerlenkung).
  */
-//% color="#0A7ACC" icon="\uf085" block="Motoren" weight=100
+//% color="#E8590C" icon="\uf085" block="Robo-Motoren" weight=115
 //% groups='["Konfiguration", "Fahren", "Fahren (blockierend)", "Encoder", "Servo"]'
 namespace motoren {
 

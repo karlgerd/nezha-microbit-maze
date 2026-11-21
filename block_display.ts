@@ -1,7 +1,7 @@
 /**
  * Textausgabe auf dem Grove OLED-Display (8 Zeilen à 25 Zeichen).
  */
-//% color="#00BFFF" icon="\uf26c" block="Anzeige" weight=85
+//% color="#8A3A0A" icon="\uf26c" block="Robo-Anzeige" weight=113
 namespace anzeige {
 
     /**

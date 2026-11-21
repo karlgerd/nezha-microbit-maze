@@ -2,13 +2,13 @@
 
 MakeCode-Erweiterung für den Informatikunterricht: didaktisch reduzierte Blöcke, mit denen Schülerinnen und Schüler einen Rescue-Maze-Roboter mit BBC micro:bit und Elecfreaks Nezha-Board programmieren.
 
-Die Erweiterung bringt drei Kategorien mit:
+Die Erweiterung bringt drei Kategorien mit. Sie stehen in der Werkzeugleiste direkt unter „Grundlagen“ und sind in Orangetönen gehalten, damit man die Roboterblöcke auch im fertigen Programm sofort erkennt:
 
 | Kategorie | Inhalt |
 |---|---|
-| **Motoren** | Konfiguration (2 oder 4 Motoren), Fahren, Drehen, Encoder, Servo |
-| **Sensoren** | ToF-Abstandssensor, RGB-Farbsensor, Neigung (Rampen) |
-| **Anzeige** | Text und Zahlen auf dem OLED-Display |
+| **Robo-Motoren** | Konfiguration (2 oder 4 Motoren), Fahren, Drehen, Encoder, Servo |
+| **Robo-Sensoren** | ToF-Abstandssensor, RGB-Farbsensor, Neigung (Rampen) |
+| **Robo-Anzeige** | Text und Zahlen auf dem OLED-Display |
 
 ## Erweiterung einbinden
 
@@ -16,7 +16,7 @@ Die Erweiterung bringt drei Kategorien mit:
 2. Im Zahnrad-Menü **Erweiterungen** wählen.
 3. `https://github.com/karlgerd/nezha-microbit-maze` in die Suche einfügen und die Erweiterung auswählen.
 
-Eine bestimmte Version lädt man, indem man das Tag anhängt, z. B. `https://github.com/karlgerd/nezha-microbit-maze#v1.0.0`. Es wird empfohlen, immer mit der aktuellsten Version zu arbeiten.
+Eine bestimmte Version lädt man, indem man das Tag anhängt, z. B. `https://github.com/karlgerd/nezha-microbit-maze#v1.1.0`. Es wird empfohlen, immer mit der aktuellsten Version zu arbeiten.
 
 ## Hardware
 
@@ -57,7 +57,7 @@ basic.forever(function () {
 
 ## Blöcke im Überblick
 
-### Motoren
+### Robo-Motoren
 
 | Block | Wirkung |
 |---|---|
@@ -74,7 +74,7 @@ basic.forever(function () {
 
 Positive Leistung bedeutet immer vorwärts. Die linken Motoren sind spiegelverkehrt montiert und werden intern invertiert, deshalb muss man im Programm nichts umdrehen.
 
-### Sensoren
+### Robo-Sensoren
 
 | Block | Wirkung |
 |---|---|
@@ -89,7 +89,7 @@ Positive Leistung bedeutet immer vorwärts. Die linken Motoren sind spiegelverke
 
 Die Farbwert-Blöcke liefern immer die Werte der **letzten** Messung. Vorher also `miss Farbe` ausführen.
 
-### Anzeige
+### Robo-Anzeige
 
 Das Display hat **8 Zeilen à 25 Zeichen**. Jeder `zeige …`-Block überschreibt die ganze Zeile. Kürzere Texte werden aufgefüllt, längere abgeschnitten, und nichts flackert. Umlaute, `ß` und `°` werden dargestellt.
 

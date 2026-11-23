@@ -9,6 +9,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Versionen in pxt.json und lib_version.ts vergleichen
+        run: |
+          PXT_VERSION=$(node -p "require('./pxt.json').version")
+          LIB_VERSION=$(sed -n 's/.*VERSION = "\(.*\)".*/\1/p' lib_version.ts)
+          echo "pxt.json: $PXT_VERSION, lib_version.ts: $LIB_VERSION"
+          if [ "$PXT_VERSION" != "$LIB_VERSION" ]; then
+            echo "::error::Version in lib_version.ts ($LIB_VERSION) passt nicht zu pxt.json ($PXT_VERSION)"
+            exit 1
+          fi
       - uses: actions/setup-node@v4
         with:
           node-version: 20

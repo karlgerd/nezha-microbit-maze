@@ -1,28 +1,17 @@
 /**
- * Sensoren für den Labyrinth-Roboter: Abstand (ToF), Farbe (RGB) und Neigung.
+ * Sensoren für den Labyrinth-Roboter: Abstand (ToF), Farbe (TCS3430) und Neigung.
  */
 //% color="#B8460B" icon="\uf1de" block="Robo-Sensoren" weight=114
-//% groups='["ToF-Abstandssensor", "RGB-Farbsensor", "Neigung"]'
+//% groups='["ToF-Abstandssensor", "Farbsensor", "Neigung"]'
 namespace sensoren {
 
-    export enum Farbe {
-        //% block="Rot"
-        Rot = 0,
-        //% block="Grün"
-        Gruen = 1,
-        //% block="Blau"
-        Blau = 2
-    }
-
-    export enum Farbkanal {
-        //% block="Rot"
-        Rot = 0,
-        //% block="Grün"
-        Gruen = 1,
-        //% block="Blau"
-        Blau = 2,
-        //% block="Helligkeit"
-        Helligkeit = 3
+    export enum Farbwert {
+        //% block="X"
+        X = 3,
+        //% block="Y"
+        Y = 1,
+        //% block="Z"
+        Z = 0
     }
 
     // ==========================================
@@ -31,7 +20,8 @@ namespace sensoren {
 
     /**
      * Initialisiert einen ToF-Abstandssensor am Pa.Hub. Gehört in "beim Start".
-     * Antwortet der Sensor nicht, zeigt der micro:bit ein X und die Portnummer an.
+     * Bei einem Fehler zeigt der micro:bit einen Code: H = Pa.Hub antwortet nicht,
+     * T und Port = kein ToF-Sensor am Port, ? und Port = anderes Gerät am Port.
      * @param port Port am Pa.Hub (0-5)
      */
     //% blockId=nezhamaze_tof_init
@@ -39,9 +29,13 @@ namespace sensoren {
     //% group="ToF-Abstandssensor" weight=100
     //% port.min=0 port.max=5 port.defl=0
     export function initialisiereToF(port: number): void {
-        if (!nezhaToF.init(port)) {
-            basic.showIcon(IconNames.No);
-            basic.showNumber(port);
+        let ergebnis = nezhaToF.init(port);
+        if (ergebnis === nezhaToF.InitResult.NoHub) {
+            basic.showString("H");
+        } else if (ergebnis === nezhaToF.InitResult.NoSensor) {
+            basic.showString("T" + port);
+        } else if (ergebnis === nezhaToF.InitResult.WrongDevice) {
+            basic.showString("?" + port);
         }
     }
 
@@ -59,75 +53,37 @@ namespace sensoren {
     }
 
     // ==========================================
-    // RGB-Farbsensor
+    // Farbsensor (TCS3430)
     // ==========================================
 
     /**
-     * Initialisiert einen RGB-Farbsensor am Pa.Hub. Gehört in "beim Start".
-     * @param port Port am Pa.Hub (0-5)
+     * Initialisiert den Farbsensor. Gehört in "beim Start".
+     * Der Sensor hängt direkt an einem I2C-Anschluss des Nezha-Boards (nicht am Pa.Hub).
+     * Bei einem Fehler zeigt der micro:bit einen Code: F = Farbsensor antwortet nicht,
+     * ?F = an der Adresse 0x39 antwortet ein anderes Gerät.
      */
-    //% blockId=nezhamaze_rgb_init
-    //% block="initialisiere RGB-Sensor an Pa.Hub-Port $port"
-    //% group="RGB-Farbsensor" weight=100
-    //% port.min=0 port.max=5 port.defl=1
-    export function initialisiereRGB(port: number): void {
-        nezhaRgb.start(port);
+    //% blockId=nezhamaze_color_init
+    //% block="initialisiere Farbsensor"
+    //% group="Farbsensor" weight=100
+    export function initialisiereFarbsensor(): void {
+        let ergebnis = nezhaColor.init();
+        if (ergebnis === nezhaColor.InitResult.NoSensor) {
+            basic.showString("F");
+        } else if (ergebnis === nezhaColor.InitResult.WrongDevice) {
+            basic.showString("?F");
+        }
     }
 
     /**
-     * Misst die Farbe und speichert die Werte. Danach liefern die Farbwert-Blöcke die neuen Werte.
-     * @param port Port am Pa.Hub (0-5)
+     * Gibt einen Farbwert der letzten Messung zurück (0 bis ca. 37000).
+     * Der Sensor misst fortlaufend etwa alle 0,1 Sekunden.
+     * X entspricht grob dem Rotanteil, Y der Helligkeit, Z dem Blauanteil.
      */
-    //% blockId=nezhamaze_rgb_update
-    //% block="miss Farbe an Port $port"
-    //% group="RGB-Farbsensor" weight=90
-    //% port.min=0 port.max=5 port.defl=1
-    export function missFarbe(port: number): void {
-        nezhaRgb.update(port);
-    }
-
-    /**
-     * Anteil einer Farbe (0-255) an der zuletzt gemessenen Gesamthelligkeit.
-     * Vorher "miss Farbe" ausführen.
-     * @param port Port am Pa.Hub (0-5)
-     */
-    //% blockId=nezhamaze_rgb_relative
-    //% block="Farbanteil $farbe (0-255) an Port $port"
-    //% group="RGB-Farbsensor" weight=80
-    //% port.min=0 port.max=5 port.defl=1
-    export function farbanteil(farbe: Farbe, port: number): number {
-        return nezhaRgb.relative(port, farbe);
-    }
-
-    /**
-     * Zuletzt gemessener Rohwert (0-65535) eines Farbkanals.
-     * Vorher "miss Farbe" ausführen.
-     * @param port Port am Pa.Hub (0-5)
-     */
-    //% blockId=nezhamaze_rgb_raw
-    //% block="Rohwert $kanal an Port $port"
-    //% group="RGB-Farbsensor" weight=70
-    //% port.min=0 port.max=5 port.defl=1
-    export function rohwert(kanal: Farbkanal, port: number): number {
-        return nezhaRgb.raw(port, kanal);
-    }
-
-    /**
-     * Alle zuletzt gemessenen Rohwerte als Liste: [Rot, Grün, Blau, Helligkeit].
-     * Vorher "miss Farbe" ausführen.
-     * @param port Port am Pa.Hub (0-5)
-     */
-    //% blockId=nezhamaze_rgb_raw_list
-    //% block="Rohwerte als Liste an Port $port"
-    //% group="RGB-Farbsensor" weight=60
-    //% port.min=0 port.max=5 port.defl=1
-    export function rohwerteListe(port: number): number[] {
-        return [
-            nezhaRgb.raw(port, 0),
-            nezhaRgb.raw(port, 1),
-            nezhaRgb.raw(port, 2),
-            nezhaRgb.raw(port, 3)
-        ];
+    //% blockId=nezhamaze_color_value
+    //% block="Farbwert $kanal"
+    //% group="Farbsensor" weight=90
+    export function farbwert(kanal: Farbwert): number {
+        return nezhaColor.read(kanal as number);
     }
 
     // ==========================================

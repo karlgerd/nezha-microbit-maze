@@ -7,8 +7,8 @@ Die Erweiterung bringt drei Kategorien mit. Sie stehen in der Werkzeugleiste dir
 | Kategorie | Inhalt |
 |---|---|
 | **Robo-Motoren** | Konfiguration (2 oder 4 Motoren), Fahren, Drehen, Encoder, Servo |
-| **Robo-Sensoren** | ToF-Abstandssensor, RGB-Farbsensor, Neigung (Rampen) |
-| **Robo-Anzeige** | Text und Zahlen auf dem OLED-Display |
+| **Robo-Sensoren** | ToF-Abstandssensor, Farbsensor, Neigung (Rampen) |
+| **Robo-Anzeige** | OLED-Display, LED-Ring als Unterbodenbeleuchtung |
 
 ## Erweiterung einbinden
 
@@ -16,7 +16,7 @@ Die Erweiterung bringt drei Kategorien mit. Sie stehen in der Werkzeugleiste dir
 2. Im Zahnrad-Menü **Erweiterungen** wählen.
 3. `https://github.com/karlgerd/nezha-microbit-maze` in die Suche einfügen und die Erweiterung auswählen.
 
-Eine bestimmte Version lädt man, indem man das Tag anhängt, z. B. `https://github.com/karlgerd/nezha-microbit-maze#v1.1.0`. Es wird empfohlen, immer mit der aktuellsten Version zu arbeiten.
+Eine bestimmte Version lädt man, indem man das Tag anhängt, z. B. `https://github.com/karlgerd/nezha-microbit-maze#v1.2.0`. Es wird empfohlen, immer mit der aktuellsten Version zu arbeiten.
 
 ## Hardware
 
@@ -24,28 +24,42 @@ Eine bestimmte Version lädt man, indem man das Tag anhängt, z. B. `https://git
 * Elecfreaks Nezha V2 Breakout Board mit Smart-Motoren
 * M5Stack Pa.Hub 2.1 (TCA9548A I2C-Multiplexer)
 * VL53L1X ToF-Abstandssensoren
-* TCS34725 RGB-Farbsensor
+* Adafruit TCS3430 Farbsensor (X, Y, Z)
 * Grove OLED Display 128x64 (SSD1315 / SSD1306)
+* Grove RGB-LED-Ring mit 20 LEDs (WS2813) als Unterbodenbeleuchtung
 * optional: Micro-Servo an J1–J4
 
 ### Verkabelung
 
-ToF-Sensoren und RGB-Sensor haben dieselbe I2C-Adresse (`0x29`). Deshalb gilt:
+1. **ToF-Sensoren** haben alle dieselbe I2C-Adresse (`0x29`). Sie kommen deshalb an die Ports 0–5 des **Pa.Hub**, jeder an einen eigenen Port. Der Pa.Hub steckt an einem I2C-Anschluss des Nezha-Boards.
+2. **Farbsensor** (Adresse `0x39`) und **OLED-Display** (Adresse `0x3C`) kommen direkt an freie I2C-Anschlüsse des Nezha-Boards.
+3. **LED-Ring** an einen J-Port, **Servo** an einen anderen J-Port.
+4. **Motoren** an M1–M4. Welcher Motor wo sitzt, legt der Konfigurationsblock fest.
+5. Der micro:bit wird so eingebaut, dass der **USB-Anschluss nach vorne** zeigt. Sonst sind bergauf und bergab vertauscht.
 
-1. **ToF- und RGB-Sensoren** kommen an die Ports 0–5 des **Pa.Hub**. Der Pa.Hub selbst steckt an einem I2C-Anschluss des Nezha-Boards. Jeder Sensor braucht einen eigenen Port.
-2. **OLED-Display** (Adresse `0x3C`) kommt direkt an einen freien I2C-Anschluss des Nezha-Boards.
-3. **Motoren** an M1–M4. Welcher Motor wo sitzt, legt der Konfigurationsblock fest.
-4. Der micro:bit wird so eingebaut, dass der **USB-Anschluss nach vorne** zeigt. Sonst sind bergauf und bergab vertauscht.
+### Pinbelegung des Nezha-Boards
+
+| Anschluss | Pin 1 | Pin 2 | Pin 3 | Pin 4 |
+|---|---|---|---|---|
+| I2C (4×) | GND | VCC | P19 (SCL) | P20 (SDA) |
+| J1 | GND | VCC | P8 | P1 |
+| J2 | GND | VCC | P12 | P2 |
+| J3 | GND | VCC | P14 | P13 |
+| J4 | GND | VCC | P16 | P15 |
+
+* **Grove-Geräte** (z. B. der LED-Ring) werden über Adapterkabel angeschlossen, bei denen das Signal an **Pin 4** ankommt. Die Erweiterung nutzt für den Ring deshalb P1, P2, P13 und P15.
+* Der **Servo** bekommt ein eigenes Kabel mit dem Signal an **Pin 3**. Die Erweiterung nutzt dafür P8, P12, P14 und P16.
+* Der **Farbsensor** hat einen STEMMA-QT-Stecker mit der Reihenfolge GND, V+, SDA, SCL. Am Nezha-Board ist es GND, VCC, SCL, SDA. Im Adapterkabel müssen **SDA und SCL gekreuzt** sein.
 
 ## Erstes Programm
 
 ```blocks
+anzeige.initialisiereDisplay()
 motoren.konfiguriere4Motoren(motoren.Motor.M1, motoren.Motor.M2, motoren.Motor.M3, motoren.Motor.M4)
 sensoren.initialisiereToF(0)
-anzeige.loescheDisplay()
 basic.forever(function () {
     let abstand = sensoren.abstandMm(0)
-    anzeige.zeigeTextUndZahl("Abstand", abstand, 1)
+    anzeige.zeigeTextUndZahl("Abstand", abstand, 3)
     if (abstand > 150) {
         motoren.fahre(40, 40)
     } else {
@@ -74,24 +88,45 @@ basic.forever(function () {
 
 Positive Leistung bedeutet immer vorwärts. Die linken Motoren sind spiegelverkehrt montiert und werden intern invertiert, deshalb muss man im Programm nichts umdrehen.
 
+**Fahren, bis etwas passiert:** Dafür gibt es keinen eigenen Block. Man kombiniert `fahre mit … %` mit dem eingebauten Block `pausiere bis ⟨Bedingung⟩` (Kategorie Schleifen) und danach `stoppe alle Motoren`. Die Bedingung kann beliebig zusammengesteckt werden, z. B. `Abstand in mm an Port 0 < 100`.
+
 ### Robo-Sensoren
 
 | Block | Wirkung |
 |---|---|
-| `initialisiere ToF-Sensor an Pa.Hub-Port …` | Gehört in „beim Start“. Antwortet der Sensor nicht, zeigt der micro:bit ein **X und die Portnummer**. |
+| `initialisiere ToF-Sensor an Pa.Hub-Port …` | Gehört in „beim Start“. Bei einem Fehler zeigt der micro:bit einen Code (siehe unten). |
 | `Abstand in mm an Port …` | Abstand in mm. **9999** = kein Hindernis in Reichweite, **-1** = Sensor antwortet nicht. |
-| `initialisiere RGB-Sensor an Pa.Hub-Port …` | Gehört in „beim Start“. |
-| `miss Farbe an Port …` | Misst einmal und speichert die Werte. |
-| `Farbanteil … (0-255)` | Anteil von Rot, Grün oder Blau an der Helligkeit, also weitgehend unabhängig von der Beleuchtung. |
-| `Rohwert …` / `Rohwerte als Liste` | Unverarbeitete Messwerte (0–65535). Die Liste hat die Reihenfolge [Rot, Grün, Blau, Helligkeit]. |
+| `initialisiere Farbsensor` | Gehört in „beim Start“. |
+| `Farbwert ⟨X / Y / Z⟩` | Aktueller Messwert (0 bis ca. 37 000). X entspricht grob dem Rotanteil, Y der Helligkeit, Z dem Blauanteil. Der Sensor misst fortlaufend etwa alle 0,1 s. |
 | `wenn bergab` / `wenn bergauf (mehr als … °)` | Löst aus, wenn die Neigung **1 Sekunde** lang anliegt. |
 | `wenn waagerecht` | Löst aus, wenn der Roboter wieder eben steht (unter ca. 11,5°). Kommt er von bergauf, löst der Block sofort aus, sonst nach 1 Sekunde. |
 
-Die Farbwert-Blöcke liefern immer die Werte der **letzten** Messung. Vorher also `miss Farbe` ausführen.
+Die Farbwerte hängen stark von Beleuchtung und Abstand zum Boden ab. Die Regeln für Weiß, Schwarz, Rot und Silber sollten deshalb mit genau der Beleuchtung festgelegt werden, mit der der Roboter auch fährt.
+
+**Fehlercodes beim Start** (Anzeige auf der LED-Matrix):
+
+| Code | Bedeutung | Was tun? |
+|---|---|---|
+| `H` | Pa.Hub antwortet nicht | Kabel zwischen Pa.Hub und Nezha-Board prüfen. |
+| `T` + Port | Am Pa.Hub-Port antwortet kein ToF-Sensor | Kabel und Port prüfen, Sensor tauschen. |
+| `?` + Port | Am Pa.Hub-Port steckt ein anderes Gerät | Ports vertauscht? |
+| `F` | Farbsensor antwortet nicht | Kabel prüfen, SDA/SCL gekreuzt? |
+| `?F` | An der Adresse des Farbsensors antwortet ein anderes Gerät | Verkabelung prüfen. |
+| `L` | LED-Ring benutzt, aber nicht initialisiert | `initialisiere LED-Ring` in „beim Start“ einfügen. |
+
+Treten Fehler nur nach dem Aufspielen eines Programms auf, hilft es oft, den Roboter einmal ganz aus- und wieder einzuschalten.
 
 ### Robo-Anzeige
 
-Das Display hat **8 Zeilen à 25 Zeichen**. Jeder `zeige …`-Block überschreibt die ganze Zeile. Kürzere Texte werden aufgefüllt, längere abgeschnitten, und nichts flackert. Umlaute, `ß` und `°` werden dargestellt.
+| Block | Wirkung |
+|---|---|
+| `initialisiere Display` | Gehört in „beim Start“. Löscht das Display und zeigt Name und Version der Erweiterung. So sieht man sofort, ob ein Projekt eine alte Version nutzt. |
+| `zeige Text / Zahl … in Zeile …` | Das Display hat **8 Zeilen à 25 Zeichen**. Jeder Block überschreibt die ganze Zeile, ohne Flackern. Umlaute, `ß` und `°` werden dargestellt. |
+| `initialisiere LED-Ring an Port …` | Gehört in „beim Start“. Der Ring hat 20 LEDs. |
+| `Beleuchtung: … LEDs mit R … G … B …` | Schaltet die angegebene Anzahl LEDs gleichmäßig verteilt ein, z. B. bei 5 jede vierte. Die Helligkeit ergibt sich aus den Farbwerten 0–255. |
+| `Beleuchtung aus` | Schaltet alle LEDs aus. |
+
+Bei vollem Weiß zieht der Ring über 1 A. Für die Unterbodenbeleuchtung reichen meist wenige LEDs mit gedimmten Werten, das schont auch den Akku.
 
 ## Kalibrierung für genaue Drehungen
 
@@ -126,11 +161,13 @@ Aufbau:
 | Datei | Inhalt |
 |---|---|
 | `block_*.ts` | Sichtbare Blöcke (Namespaces `motoren`, `sensoren`, `anzeige`) |
-| `lib_*.ts` | Interne Treiber: Nezha-Motoren, Pa.Hub, VL53L1X, TCS34725, Neigung, OLED |
+| `lib_*.ts` | Interne Treiber: Nezha-Motoren, Pa.Hub, VL53L1X, TCS3430, Neigung, OLED, LED-Ring |
+
+Die Version steht an zwei Stellen: in `pxt.json` und in `lib_version.ts` (für die Anzeige auf dem Display). Die GitHub Action prüft, dass beide übereinstimmen.
 
 ## Lizenz
 
-MIT, siehe [LICENSE](LICENSE). Der Motortreiber beruht auf [elecfreaks/pxt-nezha2](https://github.com/elecfreaks/pxt-nezha2), der ToF-Treiber auf der [Pololu VL53L1X-Bibliothek](https://github.com/pololu/vl53l1x-arduino).
+MIT, siehe [LICENSE](LICENSE). Der Motortreiber beruht auf [elecfreaks/pxt-nezha2](https://github.com/elecfreaks/pxt-nezha2), der ToF-Treiber auf der [Pololu VL53L1X-Bibliothek](https://github.com/pololu/vl53l1x-arduino), der Farbsensor-Treiber auf [Adafruit_TCS3430](https://github.com/adafruit/Adafruit_TCS3430). Der LED-Ring nutzt [microsoft/pxt-neopixel](https://github.com/microsoft/pxt-neopixel).
 
 #### Metadaten (verwendet für Suche, Rendering)
 

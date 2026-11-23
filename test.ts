@@ -1,15 +1,17 @@
 // Testprogramm: nutzt jeden Block einmal, damit "pxt build" die komplette API prüft.
 // Diese Datei wird nicht mitkompiliert, wenn das Paket als Erweiterung eingebunden ist.
 
+anzeige.initialisiereDisplay()
 motoren.konfiguriere4Motoren(motoren.Motor.M1, motoren.Motor.M2, motoren.Motor.M3, motoren.Motor.M4)
 motoren.konfiguriere2Motoren(motoren.Motor.M1, motoren.Motor.M2)
 motoren.setzeFahrzeuggeometrie(17.59, 14.5, 9.3)
 motoren.setzeDrehKorrektur(1.28)
 
 sensoren.initialisiereToF(0)
-sensoren.initialisiereRGB(1)
-anzeige.loescheDisplay()
-anzeige.zeigeText("Größe: 5°", 1)
+sensoren.initialisiereFarbsensor(sensoren.Verstaerkung.X16, 100)
+sensoren.initialisiereLedRing(sensoren.GrovePort.J1)
+sensoren.beleuchtung(5, 255, 255, 255)
+anzeige.zeigeText("Größe: 5°", 3)
 
 sensoren.wennBergab(15, function () {
     motoren.fahre(20, 20)
@@ -30,15 +32,22 @@ input.onButtonPressed(Button.A, function () {
     motoren.dreheZeit(500, motoren.Richtung.Links, 30)
     motoren.setzeWinkelZurueck(motoren.Motor.M1)
     anzeige.zeigeTextUndZahl("Winkel", motoren.winkel(motoren.Motor.M1), 4)
-    motoren.setzeServo(motoren.ServoPort.J1, 90)
+    motoren.setzeServo(motoren.ServoPort.J2, 90)
+})
+
+input.onButtonPressed(Button.B, function () {
+    // Muster "fahre bis": losfahren, warten, anhalten
+    motoren.fahre(40, 40)
+    pauseUntil(() => sensoren.abstandMm(0) < 100)
+    motoren.stoppeAlleMotoren()
+    sensoren.beleuchtungAus()
 })
 
 basic.forever(function () {
-    anzeige.zeigeTextUndZahl("Abstand", sensoren.abstandMm(0), 2)
-    sensoren.missFarbe(1)
-    anzeige.zeigeTextUndZahl("Rot", sensoren.farbanteil(sensoren.Farbe.Rot, 1), 3)
-    anzeige.zeigeZahl(sensoren.rohwert(sensoren.Farbkanal.Helligkeit, 1), 5)
-    let werte = sensoren.rohwerteListe(1)
-    anzeige.zeigeZahl(werte[0], 6)
-    anzeige.loescheZeile(7)
+    anzeige.zeigeTextUndZahl("Abstand", sensoren.abstandMm(0), 5)
+    anzeige.zeigeTextUndZahl("X", sensoren.farbwert(sensoren.Farbwert.X), 6)
+    anzeige.zeigeTextUndZahl("Y", sensoren.farbwert(sensoren.Farbwert.Y), 7)
+    anzeige.zeigeZahl(sensoren.farbwert(sensoren.Farbwert.Z), 8)
+    anzeige.loescheZeile(8)
+    anzeige.loescheDisplay()
 })

@@ -8,8 +8,20 @@ namespace nezhaToF {
     /** Rückgabewert, wenn der Sensor nicht antwortet. */
     export const ERROR = -1;
 
+    /** Ergebnis der Initialisierung. */
+    export enum InitResult {
+        Ok = 0,
+        /** Der Pa.Hub bestätigt die Kanalauswahl nicht. */
+        NoHub = 1,
+        /** Am Kanal antwortet kein Sensor (oder er bootet nicht). */
+        NoSensor = 2,
+        /** Am Kanal antwortet ein Gerät, aber kein VL53L1X. */
+        WrongDevice = 3
+    }
+
     // Register-Konstanten
     const SOFT_RESET = 0x0000
+    const IDENTIFICATION__MODEL_ID = 0x010F
     const OSC_MEASURED__FAST_OSC__FREQUENCY = 0x0006
     const VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND = 0x0008
     const VHV_CONFIG__INIT = 0x000B
@@ -64,6 +76,8 @@ namespace nezhaToF {
     const TIMING_BUDGET_US = 50000
     const I2C_ADDR = 0x29
     const IO_TIMEOUT_MS = 500
+    const MODEL_ID = 0xEACC
+    const INIT_ATTEMPTS = 3
 
     // Kanalspezifischer Zustand für die 6 Pa.Hub-Kanäle
     let initialised: boolean[] = [false, false, false, false, false, false]
@@ -80,28 +94,45 @@ namespace nezhaToF {
     let timeoutStartMs = 0
 
     /**
-     * Initialisiert den Sensor am angegebenen Kanal.
-     * @returns true, wenn der Sensor geantwortet hat
+     * Initialisiert den Sensor am angegebenen Kanal, bei Fehlern bis zu dreimal.
+     * Die Initialisierung enthält keine Pausen, damit kein anderer Programmteil
+     * zwischendurch den Pa.Hub auf einen anderen Kanal umschalten kann.
      */
-    export function init(channel: number): boolean {
-        if (!nezhaPaHub.isValidChannel(channel)) return false;
-        nezhaPaHub.selectChannel(channel);
+    export function init(channel: number): InitResult {
+        if (!nezhaPaHub.isValidChannel(channel)) return InitResult.NoSensor;
+        let result = InitResult.NoSensor;
+        for (let attempt = 0; attempt < INIT_ATTEMPTS; attempt++) {
+            result = initOnce(channel);
+            if (result === InitResult.Ok) return result;
+            control.waitMicros(10000);
+        }
+        return result;
+    }
+
+    function initOnce(channel: number): InitResult {
         initialised[channel] = false;
         calibrated[channel] = false;
+        if (!nezhaPaHub.selectChannel(channel)) return InitResult.NoHub;
+
+        // Antwortet überhaupt ein Gerät, und ist es ein VL53L1X?
+        let idReg = pins.createBuffer(2)
+        idReg.setNumber(NumberFormat.UInt16BE, 0, IDENTIFICATION__MODEL_ID)
+        if (pins.i2cWriteBuffer(I2C_ADDR, idReg, false) !== 0) return InitResult.NoSensor
+        if (pins.i2cReadNumber(I2C_ADDR, NumberFormat.UInt16BE, false) !== MODEL_ID) return InitResult.WrongDevice
 
         writeReg(SOFT_RESET, 0x00)
-        basic.pause(1)
+        control.waitMicros(100)
         writeReg(SOFT_RESET, 0x01)
-        basic.pause(1)
+        control.waitMicros(1000)
 
         startTimeout()
         while ((readReg(FIRMWARE__SYSTEM_STATUS) & 0x01) == 0) {
-            if (timeoutExpired()) return false
+            if (timeoutExpired()) return InitResult.NoSensor
         }
 
         writeReg(PAD_I2C_HV__EXTSUP_CONFIG, readReg(PAD_I2C_HV__EXTSUP_CONFIG) | 0x01)
         fastOscFrequency[channel] = readReg16Bit(OSC_MEASURED__FAST_OSC__FREQUENCY)
-        if (fastOscFrequency[channel] == 0) return false
+        if (fastOscFrequency[channel] == 0) return InitResult.NoSensor
 
         writeReg16Bit(DSS_CONFIG__TARGET_TOTAL_RATE_MCPS, TARGET_RATE)
         writeReg(GPIO__TIO_HV_STATUS, 0x02)
@@ -134,7 +165,7 @@ namespace nezhaToF {
         writeReg16Bit(ALGO__PART_TO_PART_RANGE_OFFSET_MM, readReg16Bit(MM_CONFIG__OUTER_OFFSET_MM) * 4)
 
         initialised[channel] = true
-        return true
+        return InitResult.Ok
     }
 
     /**
@@ -143,7 +174,7 @@ namespace nezhaToF {
      */
     export function readSingle(channel: number): number {
         if (!nezhaPaHub.isValidChannel(channel)) return ERROR;
-        if (!initialised[channel] && !init(channel)) return ERROR;
+        if (!initialised[channel] && init(channel) !== InitResult.Ok) return ERROR;
         nezhaPaHub.selectChannel(channel);
 
         writeReg(SYSTEM__INTERRUPT_CLEAR, 0x01)

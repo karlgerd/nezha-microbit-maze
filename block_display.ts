@@ -5,6 +5,20 @@
 namespace anzeige {
 
     /**
+     * Initialisiert das Display, löscht es und zeigt Name und Version der Erweiterung an.
+     * Gehört in "beim Start".
+     */
+    //% blockId=nezhamaze_oled_init
+    //% block="initialisiere Display"
+    //% weight=100
+    export function initialisiereDisplay(): void {
+        nezhaOled.init();
+        nezhaOled.clear();
+        nezhaOled.writeLine("Rescue Maze Robo", 1);
+        nezhaOled.writeLine("Erweiterung v" + nezhaVersion.VERSION, 2);
+    }
+
+    /**
      * Zeigt einen Text in einer Zeile an. Der alte Inhalt der Zeile wird überschrieben,
      * Texte über 25 Zeichen werden abgeschnitten.
      * @param text der anzuzeigende Text

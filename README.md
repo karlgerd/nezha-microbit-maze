@@ -16,7 +16,7 @@ Die Erweiterung bringt drei Kategorien mit. Sie stehen in der Werkzeugleiste dir
 2. Im Zahnrad-Menü **Erweiterungen** wählen.
 3. `https://github.com/karlgerd/nezha-microbit-maze` in die Suche einfügen und die Erweiterung auswählen.
 
-Eine bestimmte Version lädt man, indem man das Tag anhängt, z. B. `https://github.com/karlgerd/nezha-microbit-maze#v1.2.0`. Es wird empfohlen, immer mit der aktuellsten Version zu arbeiten.
+Eine bestimmte Version lädt man, indem man das Tag anhängt, z. B. `https://github.com/karlgerd/nezha-microbit-maze#v1.2.1`. Es wird empfohlen, immer mit der aktuellsten Version zu arbeiten.
 
 ## Hardware
 
@@ -168,7 +168,7 @@ Die Version steht an zwei Stellen: in `pxt.json` und in `lib_version.ts` (für d
 
 ## Lizenz
 
-MIT, siehe [LICENSE](LICENSE). Der Motortreiber beruht auf [elecfreaks/pxt-nezha2](https://github.com/elecfreaks/pxt-nezha2), der ToF-Treiber auf der [Pololu VL53L1X-Bibliothek](https://github.com/pololu/vl53l1x-arduino), der Farbsensor-Treiber auf [Adafruit_TCS3430](https://github.com/adafruit/Adafruit_TCS3430). Der LED-Ring nutzt [microsoft/pxt-neopixel](https://github.com/microsoft/pxt-neopixel).
+MIT, siehe [LICENSE](LICENSE). Der Motortreiber beruht auf [elecfreaks/pxt-nezha2](https://github.com/elecfreaks/pxt-nezha2), der ToF-Treiber auf der [Pololu VL53L1X-Bibliothek](https://github.com/pololu/vl53l1x-arduino), der Farbsensor-Treiber auf [Adafruit_TCS3430](https://github.com/adafruit/Adafruit_TCS3430). Der LED-Ring wird direkt über die WS2812-Funktion des micro:bit-Kerns angesteuert. Die Erweiterung braucht keine weiteren Bibliotheken.
 
 #### Metadaten (verwendet für Suche, Rendering)
 

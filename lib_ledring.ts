@@ -1,24 +1,29 @@
 /**
  * Interner Treiber für den Grove RGB-LED-Ring (WS2813, 20 LEDs) als Unterbodenbeleuchtung.
- * Nutzt die NeoPixel-Bibliothek von Microsoft. Nicht im Block-Menü sichtbar.
+ * Sendet die Farbdaten über light.sendWS2812Buffer aus dem micro:bit-Kern, ohne
+ * zusätzliche Bibliotheken. Nicht im Block-Menü sichtbar.
  */
 namespace nezhaLedRing {
     export const LED_COUNT = 20;
 
-    let ring: neopixel.Strip = null;
+    // 3 Byte je LED in der Reihenfolge Grün, Rot, Blau (WS2812/WS2813)
+    let buf: Buffer = null;
+    let pin: DigitalPin;
     let warned = false;
 
     /** Legt den Datenpin fest und schaltet alle LEDs aus. */
-    export function init(pin: DigitalPin): void {
-        ring = neopixel.create(pin, LED_COUNT, NeoPixelMode.RGB);
-        // Volle Skala, damit die RGB-Werte 0-255 direkt der Helligkeit entsprechen
-        ring.setBrightness(255);
-        ring.clear();
-        ring.show();
+    export function init(datenPin: DigitalPin): void {
+        pin = datenPin;
+        buf = pins.createBuffer(LED_COUNT * 3);
+        show();
+    }
+
+    function show(): void {
+        light.sendWS2812Buffer(buf, pin);
     }
 
     function ready(): boolean {
-        if (ring) return true;
+        if (buf) return true;
         // Einmalig darauf hinweisen, dass "initialisiere LED-Ring" fehlt
         if (!warned) {
             warned = true;
@@ -28,21 +33,26 @@ namespace nezhaLedRing {
     }
 
     /** Schaltet "anzahl" LEDs gleichmäßig verteilt in der Farbe (r, g, b) ein, alle anderen aus. */
-    export function light(anzahl: number, r: number, g: number, b: number): void {
+    export function illuminate(anzahl: number, r: number, g: number, b: number): void {
         if (!ready()) return;
         anzahl = Math.clamp(0, LED_COUNT, Math.round(anzahl));
-        let farbe = neopixel.rgb(Math.clamp(0, 255, r), Math.clamp(0, 255, g), Math.clamp(0, 255, b));
-        ring.clear();
+        r = Math.clamp(0, 255, Math.round(r));
+        g = Math.clamp(0, 255, Math.round(g));
+        b = Math.clamp(0, 255, Math.round(b));
+        buf.fill(0);
         for (let i = 0; i < anzahl; i++) {
-            ring.setPixelColor(Math.round(i * LED_COUNT / anzahl) % LED_COUNT, farbe);
+            let led = Math.round(i * LED_COUNT / anzahl) % LED_COUNT;
+            buf[led * 3] = g;
+            buf[led * 3 + 1] = r;
+            buf[led * 3 + 2] = b;
         }
-        ring.show();
+        show();
     }
 
     /** Schaltet alle LEDs aus. */
     export function off(): void {
         if (!ready()) return;
-        ring.clear();
-        ring.show();
+        buf.fill(0);
+        show();
     }
 }

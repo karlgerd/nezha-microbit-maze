@@ -152,7 +152,7 @@ namespace sensoren {
     //% inlineInputMode=inline
     //% group="Beleuchtung" weight=30
     export function beleuchtung(anzahl: number, rot: number, gruen: number, blau: number): void {
-        nezhaLedRing.light(anzahl, rot, gruen, blau);
+        nezhaLedRing.illuminate(anzahl, rot, gruen, blau);
     }
 
     /**

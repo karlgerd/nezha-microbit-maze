@@ -14,9 +14,21 @@ namespace nezhaColor {
     const REG_CH0DATAL = 0x94; // Z, Y, IR1, X als je 16 Bit (Little Endian)
     const REG_CFG2 = 0x9F;     // Bit 4 HGAIN
 
-    // ca. 100 ms Integrationszeit, Verstärkung 16x (für Beleuchtung durch den LED-Ring)
-    const ATIME = 35;
-    const GAIN_16X = 0x02;
+    /** Verstärkung des Sensors. */
+    export enum Gain {
+        X1 = 0,
+        X4 = 1,
+        X16 = 2,
+        X64 = 3,
+        X128 = 4
+    }
+
+    /** Dauer eines Integrationszyklus in ms. */
+    const CYCLE_MS = 2.78;
+
+    // Aktuelle Einstellungen (Standard: 16x, ca. 100 ms)
+    let gain = Gain.X16;
+    let atime = 35;
 
     /** Ergebnis der Initialisierung. */
     export enum InitResult {
@@ -48,29 +60,37 @@ namespace nezhaColor {
         return pins.i2cReadNumber(I2C_ADDR, NumberFormat.UInt8BE);
     }
 
-    /** Schaltet den Sensor ein und startet die fortlaufende Messung. */
-    export function init(): InitResult {
+    /**
+     * Schaltet den Sensor ein und startet die fortlaufende Messung.
+     * @param g Verstärkung
+     * @param messzeitMs Messzeit (Integrationszeit) in ms, 3 bis 711
+     */
+    export function init(g: Gain, messzeitMs: number): InitResult {
         initialised = false;
+        gain = g;
+        atime = Math.clamp(0, 255, Math.round(messzeitMs / CYCLE_MS) - 1);
+
         if (!writeReg(REG_ENABLE, 0x00)) return InitResult.NoSensor;
         if (readReg(REG_ID) !== CHIP_ID) return InitResult.WrongDevice;
 
-        writeReg(REG_ATIME, ATIME);
-        // Verstärkung 16x, AMUX auf X
-        writeReg(REG_CFG1, (readReg(REG_CFG1) & ~0x0B) | GAIN_16X);
-        // HGAIN aus
-        writeReg(REG_CFG2, readReg(REG_CFG2) & ~0x10);
+        writeReg(REG_ATIME, atime);
+        // Verstärkung (128x = 64x plus HGAIN), AMUX auf X
+        let again = gain === Gain.X128 ? Gain.X64 : gain;
+        writeReg(REG_CFG1, (readReg(REG_CFG1) & ~0x0B) | again);
+        let cfg2 = readReg(REG_CFG2);
+        writeReg(REG_CFG2, gain === Gain.X128 ? (cfg2 | 0x10) : (cfg2 & ~0x10));
         // Power on und Messung ein
         writeReg(REG_ENABLE, 0x03);
 
         // Auf die erste vollständige Messung warten
-        basic.pause((ATIME + 1) * 3 + 10);
+        basic.pause(Math.ceil((atime + 1) * CYCLE_MS) + 10);
         initialised = true;
         return InitResult.Ok;
     }
 
     /** Liest einen Kanal der zuletzt abgeschlossenen Messung (0-65535). */
     export function read(channel: Channel): number {
-        if (!initialised && init() !== InitResult.Ok) return 0;
+        if (!initialised && init(gain, (atime + 1) * CYCLE_MS) !== InitResult.Ok) return 0;
         pins.i2cWriteNumber(I2C_ADDR, REG_CH0DATAL, NumberFormat.UInt8BE, true);
         let buf = pins.i2cReadBuffer(I2C_ADDR, 8);
         return buf[channel * 2] | (buf[channel * 2 + 1] << 8);

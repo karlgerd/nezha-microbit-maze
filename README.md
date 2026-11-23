@@ -96,12 +96,12 @@ Positive Leistung bedeutet immer vorwärts. Die linken Motoren sind spiegelverke
 |---|---|
 | `initialisiere ToF-Sensor an Pa.Hub-Port …` | Gehört in „beim Start“. Bei einem Fehler zeigt der micro:bit einen Code (siehe unten). |
 | `Abstand in mm an Port …` | Abstand in mm. **9999** = kein Hindernis in Reichweite, **-1** = Sensor antwortet nicht. |
-| `initialisiere Farbsensor` | Gehört in „beim Start“. |
-| `Farbwert ⟨X / Y / Z⟩` | Aktueller Messwert (0 bis ca. 37 000). X entspricht grob dem Rotanteil, Y der Helligkeit, Z dem Blauanteil. Der Sensor misst fortlaufend etwa alle 0,1 s. |
+| `initialisiere Farbsensor mit Verstärkung … Messzeit … ms` | Gehört in „beim Start“. Standard: 16x und 100 ms. Höhere Verstärkung und längere Messzeit ergeben größere Werte. |
+| `Farbwert ⟨X / Y / Z⟩` | Aktueller Messwert. X entspricht grob dem Rotanteil, Y der Helligkeit, Z dem Blauanteil. Der größte mögliche Wert hängt von der Messzeit ab (bei 100 ms ca. 36 800, höchstens 65 535). Der Sensor misst fortlaufend, ein neuer Wert liegt jeweils nach der Messzeit vor. |
 | `wenn bergab` / `wenn bergauf (mehr als … °)` | Löst aus, wenn die Neigung **1 Sekunde** lang anliegt. |
 | `wenn waagerecht` | Löst aus, wenn der Roboter wieder eben steht (unter ca. 11,5°). Kommt er von bergauf, löst der Block sofort aus, sonst nach 1 Sekunde. |
 
-Die Farbwerte hängen stark von Beleuchtung und Abstand zum Boden ab. Die Regeln für Weiß, Schwarz, Rot und Silber sollten deshalb mit genau der Beleuchtung festgelegt werden, mit der der Roboter auch fährt.
+Bleiben die Werte bei hellem Untergrund am Maximum hängen, ist der Sensor übersteuert: Verstärkung oder Messzeit verringern. Sind alle Werte sehr klein, beides erhöhen. Die Farbwerte hängen außerdem stark von Beleuchtung und Abstand zum Boden ab. Die Regeln für Weiß, Schwarz, Rot und Silber sollten deshalb mit genau der Beleuchtung festgelegt werden, mit der der Roboter auch fährt.
 
 **Fehlercodes beim Start** (Anzeige auf der LED-Matrix):
 

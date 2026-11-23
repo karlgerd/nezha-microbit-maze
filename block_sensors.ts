@@ -5,6 +5,19 @@
 //% groups='["ToF-Abstandssensor", "Farbsensor", "Neigung"]'
 namespace sensoren {
 
+    export enum Verstaerkung {
+        //% block="1x"
+        X1 = 0,
+        //% block="4x"
+        X4 = 1,
+        //% block="16x"
+        X16 = 2,
+        //% block="64x"
+        X64 = 3,
+        //% block="128x"
+        X128 = 4
+    }
+
     export enum Farbwert {
         //% block="X"
         X = 3,
@@ -59,14 +72,20 @@ namespace sensoren {
     /**
      * Initialisiert den Farbsensor. Gehört in "beim Start".
      * Der Sensor hängt direkt an einem I2C-Anschluss des Nezha-Boards (nicht am Pa.Hub).
+     * Höhere Verstärkung und längere Messzeit ergeben größere Werte. Bei zu viel Licht
+     * bleiben die Werte am Maximum hängen, dann Verstärkung oder Messzeit verringern.
      * Bei einem Fehler zeigt der micro:bit einen Code: F = Farbsensor antwortet nicht,
      * ?F = an der Adresse 0x39 antwortet ein anderes Gerät.
+     * @param verstaerkung Verstärkung des Sensors
+     * @param messzeit Messzeit in ms (3 bis 711)
      */
     //% blockId=nezhamaze_color_init
-    //% block="initialisiere Farbsensor"
+    //% block="initialisiere Farbsensor mit Verstärkung $verstaerkung Messzeit $messzeit ms"
+    //% verstaerkung.defl=sensoren.Verstaerkung.X16
+    //% messzeit.min=3 messzeit.max=711 messzeit.defl=100
     //% group="Farbsensor" weight=100
-    export function initialisiereFarbsensor(): void {
-        let ergebnis = nezhaColor.init();
+    export function initialisiereFarbsensor(verstaerkung: Verstaerkung, messzeit: number): void {
+        let ergebnis = nezhaColor.init(verstaerkung as number, messzeit);
         if (ergebnis === nezhaColor.InitResult.NoSensor) {
             basic.showString("F");
         } else if (ergebnis === nezhaColor.InitResult.WrongDevice) {
@@ -75,8 +94,9 @@ namespace sensoren {
     }
 
     /**
-     * Gibt einen Farbwert der letzten Messung zurück (0 bis ca. 37000).
-     * Der Sensor misst fortlaufend etwa alle 0,1 Sekunden.
+     * Gibt einen Farbwert der letzten Messung zurück. Der größte mögliche Wert hängt
+     * von der Messzeit ab: etwa 1024 je 2,78 ms, höchstens 65535 (bei 100 ms ca. 36800).
+     * Der Sensor misst fortlaufend, ein neuer Wert liegt jeweils nach der Messzeit vor.
      * X entspricht grob dem Rotanteil, Y der Helligkeit, Z dem Blauanteil.
      */
     //% blockId=nezhamaze_color_value

@@ -1,9 +1,21 @@
 /**
- * Sensoren für den Labyrinth-Roboter: Abstand (ToF), Farbe (TCS3430) und Neigung.
+ * Sensoren für den Labyrinth-Roboter: Abstand (ToF), Farbe (TCS3430) mit Beleuchtung und Neigung.
  */
 //% color="#B8460B" icon="\uf1de" block="Robo-Sensoren" weight=114
-//% groups='["ToF-Abstandssensor", "Farbsensor", "Neigung"]'
+//% groups='["ToF-Abstandssensor", "Farbsensor", "Beleuchtung", "Neigung"]'
 namespace sensoren {
+
+    /** J-Ports des Nezha-Boards für Grove-Geräte: Signal an Pin 4 des Ports. */
+    export enum GrovePort {
+        //% block="J1"
+        J1 = DigitalPin.P1,
+        //% block="J2"
+        J2 = DigitalPin.P2,
+        //% block="J3"
+        J3 = DigitalPin.P13,
+        //% block="J4"
+        J4 = DigitalPin.P15
+    }
 
     export enum Verstaerkung {
         //% block="1x"
@@ -104,6 +116,53 @@ namespace sensoren {
     //% group="Farbsensor" weight=90
     export function farbwert(kanal: Farbwert): number {
         return nezhaColor.read(kanal as number);
+    }
+
+    // ==========================================
+    // Beleuchtung (LED-Ring unter dem Farbsensor)
+    // ==========================================
+
+    /**
+     * Initialisiert den LED-Ring (20 LEDs) an einem J-Port und schaltet ihn aus.
+     * Gehört in "beim Start". Das Signal liegt an Pin 4 des Ports
+     * (J1 = P1, J2 = P2, J3 = P13, J4 = P15).
+     */
+    //% blockId=nezhamaze_ring_init
+    //% block="initialisiere LED-Ring an Port $port"
+    //% port.defl=sensoren.GrovePort.J1
+    //% group="Beleuchtung" weight=40
+    export function initialisiereLedRing(port: GrovePort): void {
+        nezhaLedRing.init(<number>port);
+    }
+
+    /**
+     * Schaltet eine Anzahl LEDs gleichmäßig verteilt ein, alle anderen aus.
+     * Die Helligkeit ergibt sich aus den Farbwerten, z. B. 100, 100, 100 = gedimmtes Weiß.
+     * @param anzahl Anzahl der leuchtenden LEDs (0-20)
+     * @param rot Rotanteil (0-255)
+     * @param gruen Grünanteil (0-255)
+     * @param blau Blauanteil (0-255)
+     */
+    //% blockId=nezhamaze_ring_light
+    //% block="Beleuchtung: $anzahl LEDs mit R $rot G $gruen B $blau"
+    //% anzahl.min=0 anzahl.max=20 anzahl.defl=5
+    //% rot.min=0 rot.max=255 rot.defl=255
+    //% gruen.min=0 gruen.max=255 gruen.defl=255
+    //% blau.min=0 blau.max=255 blau.defl=255
+    //% inlineInputMode=inline
+    //% group="Beleuchtung" weight=30
+    export function beleuchtung(anzahl: number, rot: number, gruen: number, blau: number): void {
+        nezhaLedRing.light(anzahl, rot, gruen, blau);
+    }
+
+    /**
+     * Schaltet alle LEDs des Rings aus.
+     */
+    //% blockId=nezhamaze_ring_off
+    //% block="Beleuchtung aus"
+    //% group="Beleuchtung" weight=20
+    export function beleuchtungAus(): void {
+        nezhaLedRing.off();
     }
 
     // ==========================================

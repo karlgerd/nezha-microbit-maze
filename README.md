@@ -7,8 +7,8 @@ Die Erweiterung bringt drei Kategorien mit. Sie stehen in der Werkzeugleiste dir
 | Kategorie | Inhalt |
 |---|---|
 | **Robo-Motoren** | Konfiguration (2 oder 4 Motoren), Fahren, Drehen, Encoder, Servo |
-| **Robo-Sensoren** | ToF-Abstandssensor, Farbsensor, Neigung (Rampen) |
-| **Robo-Anzeige** | OLED-Display, LED-Ring als Unterbodenbeleuchtung |
+| **Robo-Sensoren** | ToF-Abstandssensor, Farbsensor mit LED-Ring als Beleuchtung, Neigung (Rampen) |
+| **Robo-Anzeige** | Text und Zahlen auf dem OLED-Display |
 
 ## Erweiterung einbinden
 
@@ -98,8 +98,13 @@ Positive Leistung bedeutet immer vorwärts. Die linken Motoren sind spiegelverke
 | `Abstand in mm an Port …` | Abstand in mm. **9999** = kein Hindernis in Reichweite, **-1** = Sensor antwortet nicht. |
 | `initialisiere Farbsensor mit Verstärkung … Messzeit … ms` | Gehört in „beim Start“. Standard: 16x und 100 ms. Höhere Verstärkung und längere Messzeit ergeben größere Werte. |
 | `Farbwert ⟨X / Y / Z⟩` | Aktueller Messwert. X entspricht grob dem Rotanteil, Y der Helligkeit, Z dem Blauanteil. Der größte mögliche Wert hängt von der Messzeit ab (bei 100 ms ca. 36 800, höchstens 65 535). Der Sensor misst fortlaufend, ein neuer Wert liegt jeweils nach der Messzeit vor. |
+| `initialisiere LED-Ring an Port …` | Gehört in „beim Start“. Der Ring hat 20 LEDs. |
+| `Beleuchtung: … LEDs mit R … G … B …` | Schaltet die angegebene Anzahl LEDs gleichmäßig verteilt ein, z. B. bei 5 jede vierte. Die Helligkeit ergibt sich aus den Farbwerten 0–255. |
+| `Beleuchtung aus` | Schaltet alle LEDs aus. |
 | `wenn bergab` / `wenn bergauf (mehr als … °)` | Löst aus, wenn die Neigung **1 Sekunde** lang anliegt. |
 | `wenn waagerecht` | Löst aus, wenn der Roboter wieder eben steht (unter ca. 11,5°). Kommt er von bergauf, löst der Block sofort aus, sonst nach 1 Sekunde. |
+
+Der LED-Ring sitzt unter dem Roboter, der Farbsensor in seiner Mitte. Bei vollem Weiß zieht der Ring über 1 A. Meist reichen wenige LEDs mit gedimmten Werten, das schont auch den Akku.
 
 Bleiben die Werte bei hellem Untergrund am Maximum hängen, ist der Sensor übersteuert: Verstärkung oder Messzeit verringern. Sind alle Werte sehr klein, beides erhöhen. Die Farbwerte hängen außerdem stark von Beleuchtung und Abstand zum Boden ab. Die Regeln für Weiß, Schwarz, Rot und Silber sollten deshalb mit genau der Beleuchtung festgelegt werden, mit der der Roboter auch fährt.
 
@@ -122,11 +127,7 @@ Treten Fehler nur nach dem Aufspielen eines Programms auf, hilft es oft, den Rob
 |---|---|
 | `initialisiere Display` | Gehört in „beim Start“. Löscht das Display und zeigt Name und Version der Erweiterung. So sieht man sofort, ob ein Projekt eine alte Version nutzt. |
 | `zeige Text / Zahl … in Zeile …` | Das Display hat **8 Zeilen à 25 Zeichen**. Jeder Block überschreibt die ganze Zeile, ohne Flackern. Umlaute, `ß` und `°` werden dargestellt. |
-| `initialisiere LED-Ring an Port …` | Gehört in „beim Start“. Der Ring hat 20 LEDs. |
-| `Beleuchtung: … LEDs mit R … G … B …` | Schaltet die angegebene Anzahl LEDs gleichmäßig verteilt ein, z. B. bei 5 jede vierte. Die Helligkeit ergibt sich aus den Farbwerten 0–255. |
-| `Beleuchtung aus` | Schaltet alle LEDs aus. |
 
-Bei vollem Weiß zieht der Ring über 1 A. Für die Unterbodenbeleuchtung reichen meist wenige LEDs mit gedimmten Werten, das schont auch den Akku.
 
 ## Kalibrierung für genaue Drehungen
 

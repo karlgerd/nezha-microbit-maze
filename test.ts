@@ -9,8 +9,8 @@ motoren.setzeDrehKorrektur(1.28)
 
 sensoren.initialisiereToF(0)
 sensoren.initialisiereFarbsensor(sensoren.Verstaerkung.X16, 100)
-anzeige.initialisiereLedRing(anzeige.GrovePort.J1)
-anzeige.beleuchtung(5, 255, 255, 255)
+sensoren.initialisiereLedRing(sensoren.GrovePort.J1)
+sensoren.beleuchtung(5, 255, 255, 255)
 anzeige.zeigeText("Größe: 5°", 3)
 
 sensoren.wennBergab(15, function () {
@@ -40,7 +40,7 @@ input.onButtonPressed(Button.B, function () {
     motoren.fahre(40, 40)
     pauseUntil(() => sensoren.abstandMm(0) < 100)
     motoren.stoppeAlleMotoren()
-    anzeige.beleuchtungAus()
+    sensoren.beleuchtungAus()
 })
 
 basic.forever(function () {
